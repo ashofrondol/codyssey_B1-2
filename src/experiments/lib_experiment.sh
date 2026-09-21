@@ -9,7 +9,8 @@
 #   1) 출력 헬퍼            banner/step/info/warn/pass/fail/fmt
 #   2) 자원 지표            _metric_cpu/_metric_mem/_metric_disk/_sample_to
 #   3) 앱 생명주기          launch_app/_confirm_pid/kill_app/_kill_leftovers/_curl_probe
-#   4) 증거 스냅샷          _snapshot_terminating/_snapshot_gone/_snapshot_deadlock/_append_app_evidence
+#   4) 증거 스냅샷          _snapshot_terminating/_snapshot_bind_addr/_snapshot_gone/
+#                          _snapshot_deadlock/_append_app_evidence
 #   5) 관측 루프            _watch_terminating(자가종료형) / _watch_freeze(데드락형)
 #   6) 자가종료형 공통 코어 _terminating_experiment   ← OOM(01)·CPU(02) 가 공유
 #   7) 결과 기록/요약       _record / print_summary
@@ -247,6 +248,42 @@ _snapshot_terminating() {
     } >> "$file"
 }
 
+# 바인딩 주소 캡처 (R1-11 / B1-2-P11)
+#   "포트가 LISTEN 이다" 와 "0.0.0.0 에 바인딩됐다" 는 다른 사실이다. 부트 로그의
+#   [4/6] Checking Port Availability 는 바인딩 '전' 가용성 검사라 주소를 말해 주지 않고,
+#   monitor.sh 의 LISTEN 검사도 포트 번호만 본다. 주소를 구분해 주는 유일한 출력이 ss 다.
+#   앱이 실제로 포트를 문 뒤 한 번만 뜨며, 읽기 전용이라 실험 대상에 영향을 주지 않는다.
+_snapshot_bind_addr() {
+    local file="$1" i out="" tool=""
+    command -v ss      >/dev/null 2>&1 && tool="ss"
+    [[ -z "$tool" ]] && { command -v netstat >/dev/null 2>&1 && tool="netstat"; }
+
+    # 기동 직후에는 아직 bind() 전일 수 있다 — 잡힐 때까지 최대 8초만 기다린다.
+    for i in 1 2 3 4 5 6 7 8; do
+        case "$tool" in
+            ss)      out="$(ss -tlnp 2>/dev/null | grep ":${AGENT_PORT}" || true)" ;;
+            netstat) out="$(netstat -tlnp 2>/dev/null | grep ":${AGENT_PORT}" || true)" ;;
+            *)       break ;;
+        esac
+        [[ -n "$out" ]] && break
+        sleep 1
+    done
+
+    {
+        echo "##### $(date '+%H:%M:%S')  ${tool:-ss} -tlnp | grep ${AGENT_PORT}   (바인딩 주소 증거) #####"
+        if [[ -n "$out" ]]; then
+            echo "$out"
+            echo "# 읽는 법: Local Address:Port 가 0.0.0.0:${AGENT_PORT} 이면 전 인터페이스(외부 접속 가능),"
+            echo "#          127.0.0.1:${AGENT_PORT} 이면 루프백 전용이라 같은 호스트에서만 닿는다."
+        elif [[ -z "$tool" ]]; then
+            echo "# ss/netstat 둘 다 없음 — 바인딩 주소 캡처 생략 (iproute2 설치 필요)"
+        else
+            echo "# 8초 대기했지만 :${AGENT_PORT} LISTEN 없음 — 앱이 바인딩 전이거나 이미 종료됐다."
+        fi
+        echo
+    } >> "$file"
+}
+
 # 프로세스 종료 직후 흔적
 _snapshot_gone() {
     local pid="$1" file="$2"
@@ -366,6 +403,7 @@ _terminating_experiment() {
 
     local pid; pid="$(launch_app "$APP_STDOUT")"; CURRENT_PID="$pid"
     pid="$(_confirm_pid "$pid")"; CURRENT_PID="$pid"
+    _snapshot_bind_addr "$PSF"
     step "PID=${pid} → '${signature}' 시그니처 대기 (최대 $(fmt "$before_timeout"))"
 
     _watch_terminating "$pid" "$before_timeout" "$signature" "$MON" "$PSF" 0
@@ -395,6 +433,7 @@ _terminating_experiment() {
 
         pid="$(launch_app "$APP_STDOUT")"; CURRENT_PID="$pid"
         pid="$(_confirm_pid "$pid")"; CURRENT_PID="$pid"
+        _snapshot_bind_addr "$PSF"
 
         local after_cap
         if (( before_surv > 0 )); then
@@ -527,6 +566,24 @@ preflight() {
     done
     command -v curl >/dev/null 2>&1 && pass "curl 사용 가능 (외부 무응답 검증 ON)" \
         || warn "curl 없음 — Deadlock 의 curl 타임아웃 검증은 생략됨"
+
+    # R1-11(0.0.0.0:15034 바인딩) — 기동 전이라 여기서 말할 수 있는 것은 "포트가 비어 있는가"뿐이다.
+    # 주소(0.0.0.0 vs 127.0.0.1) 증거는 앱이 뜨고 난 뒤 _snapshot_bind_addr 가 *_ps_top.txt 에 남긴다.
+    local bind_now=""
+    if command -v ss >/dev/null 2>&1 || command -v netstat >/dev/null 2>&1; then
+        if command -v ss >/dev/null 2>&1; then
+            bind_now="$(ss -tlnp 2>/dev/null | grep ":${AGENT_PORT}" || true)"
+        else
+            bind_now="$(netstat -tlnp 2>/dev/null | grep ":${AGENT_PORT}" || true)"
+        fi
+        if [[ -z "$bind_now" ]]; then
+            pass "포트 ${AGENT_PORT} 비어 있음 — 기동 후 바인딩 주소는 *_ps_top.txt 에 캡처된다"
+        else
+            warn "포트 ${AGENT_PORT} 가 이미 LISTEN 상태 — 잔존 프로세스 확인: ${bind_now}"
+        fi
+    else
+        warn "ss/netstat 없음 — R1-11 바인딩 주소 캡처 불가 (iproute2 설치 권장)"
+    fi
 
     mkdir -p "$EVIDENCE_DIR" 2>/dev/null || true
     [[ -w "$EVIDENCE_DIR" ]] && pass "EVIDENCE_DIR: $EVIDENCE_DIR" \

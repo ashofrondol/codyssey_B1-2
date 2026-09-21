@@ -583,6 +583,14 @@ $([[ "$RUN_EXPERIMENTS" == "1" ]] && echo "3대 장애 실험까지 재현·검�
     else
         printf "${c_dim}  (운영 머신은 보존됨. 재검증은 그대로 재실행, 완전 재시작은 FRESH=1)${c_reset}\n"
     fi
+
+    # 실패를 사람이 읽는 노란 글씨로만 말하면 CI·래퍼 스크립트는 그것을 못 본다.
+    # setup/boot 단계 실패는 die() 가 이미 exit 1 로 끊지만, 실험 단계는 경고만 남기고
+    # 계속 진행하도록(부분 증거라도 수집) 설계돼 있어 여기서만 종료 코드로 드러난다.
+    #   0 = 전 단계 PASS   /   1 = setup·boot 는 통과했으나 PASS 못 한 실험 파이프라인 있음
+    # main 이 이 스크립트의 마지막 명령이므로 이 return 값이 곧 스크립트 종료 코드다.
+    [[ "$EXP_WARN" == "1" ]] && printf "${c_dim}  (exit code %s — 실패한 파이프라인이 있어 0 이 아님)${c_reset}\n" "$EXP_WARN"
+    return "$EXP_WARN"
 }
 
 main "$@"

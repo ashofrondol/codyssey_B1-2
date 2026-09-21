@@ -32,6 +32,7 @@ DOCS = [
     ("이론 지식",              MD_DIR / "이론_지식.md"),
     ("용어집",                 MD_DIR / "용어집.md"),
     ("실험 절차서",            ROOT / "실험_절차서.md"),
+    ("요구사항 ID 매핑",       MD_DIR / "요구사항_ID_매핑.md"),
     ("[1] OOM 분석 리포트",    REPORTS_DIR / "01_oom_report.md"),
     ("[2] CPU 과점유 리포트",  REPORTS_DIR / "02_cpu_report.md"),
     ("[3] Deadlock 리포트",    REPORTS_DIR / "03_deadlock_report.md"),

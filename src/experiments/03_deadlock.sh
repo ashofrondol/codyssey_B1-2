@@ -36,6 +36,7 @@ experiment_deadlock() {
 
     local pid; pid="$(launch_app "$APP_STDOUT")"; CURRENT_PID="$pid"
     pid="$(_confirm_pid "$pid")"; CURRENT_PID="$pid"
+    _snapshot_bind_addr "$PSF"
     step "PID=${pid} 무응답(freeze) 대기 (최대 $(fmt "$DEADLOCK_TIMEOUT"), $(fmt "$FREEZE_SECS") 무변화 시 freeze)"
 
     _watch_freeze "$pid" "$DEADLOCK_TIMEOUT" "$MON"
@@ -70,6 +71,7 @@ experiment_deadlock() {
 
         pid="$(launch_app "$APP_STDOUT")"; CURRENT_PID="$pid"
         pid="$(_confirm_pid "$pid")"; CURRENT_PID="$pid"
+        _snapshot_bind_addr "$PSF"
         _watch_freeze "$pid" "$DEADLOCK_AFTER_VERIFY" "$MON"
         local arc=$?       # 0=froze(나쁨) 1=died(나쁨) 2=freeze없음(좋음)
         app_alive "$pid" && after_alive="yes"

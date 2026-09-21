@@ -426,7 +426,7 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 | --- | --- | --- | --- |
 | **R1** | 사전 준비 11개 조건 충족 상태로 앱 부팅 | ✅ 충족 | `evidence/oom_app.log:34-49` — 부트 시퀀스 `[1/6]`~`[6/6]` 전부 `[OK]` + `All Boot Checks Passed! / Agent READY`. 동일 블록이 `evidence/cpu_app.log`·`evidence/deadlock_app.log` 에도 있음 |
 | **R1-1** | root 아닌 일반 사용자로 실행 | ✅ 충족 | `evidence/oom_app.log:36` — `Running as service user 'ashofrondol' (uid=1000)`. 계정 생성은 `src/03_users_and_groups.sh` |
-| **R1-2** | `AGENT_HOME` 설정 | ✅ 충족 | `src/05_env_and_keyfile.sh:34` / 수집 환경은 `evidence/oom_monitor.log:12` 헤더에 명시 |
+| **R1-2** | `AGENT_HOME` 설정 | ✅ 충족 | `src/05_env_and_keyfile.sh:34` / 수집 환경은 `evidence/oom_monitor.log:11` 헤더에 명시 |
 | **R1-3** | `AGENT_PORT=15034` 고정 | ✅ 충족 | `src/05_env_and_keyfile.sh:35`, `src/monitor.sh:13`, 부트 로그 `evidence/oom_app.log:41-42` (`Port 15034 is available`) |
 | **R1-4** | `AGENT_UPLOAD_DIR` 설정 + 디렉터리 생성 | ✅ 충족 | `src/05_env_and_keyfile.sh:36` + 실제 생성 `src/04_directories_and_acl.sh:29` |
 | **R1-5** | `AGENT_KEY_PATH=$AGENT_HOME/api_keys` (경로 존재) | ✅ 충족 | `src/05_env_and_keyfile.sh:37` + `src/04_directories_and_acl.sh:30`. B1-1 의 "파일 경로" → B1-2 의 "디렉터리" 변경을 스크립트 주석(`src/05_env_and_keyfile.sh:7-9`)에서 명시적으로 처리 |
@@ -435,7 +435,7 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 | **R1-8** | `CPU_MAX_OCCUPY` 정수 10~100 | ✅ 충족 | `src/05_env_and_keyfile.sh:45` (10). 실험값 95/80/60/50/10 전부 범위 내 — `evidence/cpu_monitor.log:286-292` |
 | **R1-9** | `MULTI_THREAD_ENABLE` true/false | ✅ 충족 | `src/05_env_and_keyfile.sh:46`, Before=`true` / After=`false` 양쪽 실측 — `evidence/deadlock_monitor.log:274-302` |
 | **R1-10** | `secret.key` 내용 = `agent_api_key_test` | ✅ 충족 | `src/05_env_and_keyfile.sh:52-57` (생성·권한 640), 부트 로그 `evidence/oom_app.log:39-40` — `Verified 'secret.key' with correct key string.` |
-| **R1-11** | `0.0.0.0:15034` 바인딩 가능 | 🟡 부분 충족 | 간접 근거는 충분하다 — 부트 `[4/6] Checking Port Availability [OK]`(`evidence/oom_app.log:41-42`), `Agent listening at port 15034`(`evidence/oom_app.log:51`), `monitor.sh` 의 LISTEN 검사 통과(`evidence/oom_monitor.log:45`, 구현은 `src/monitor.sh:57-67`), 방화벽 예외 `src/02_firewall_allowlist.sh:33`. 다만 **바인딩 주소가 `0.0.0.0` 인지 `127.0.0.1` 인지 구분해 주는 캡처(`ss -tlnp` 등)가 evidence 전체에 0건**이고, 남아 있는 접속 시도는 `curl http://127.0.0.1:15034` 뿐이다(`evidence/deadlock_ps_top.txt:81-90`) |
+| **R1-11** | `0.0.0.0:15034` 바인딩 가능 | 🟡 부분 충족 | 간접 근거는 충분하다 — 부트 `[4/6] Checking Port Availability [OK]`(`evidence/oom_app.log:41-42`), `Agent listening at port 15034`(`evidence/oom_app.log:51`), `monitor.sh` 의 LISTEN 검사 통과(`evidence/oom_monitor.log:45`, 구현은 `src/monitor.sh:57-67`), 방화벽 예외 `src/02_firewall_allowlist.sh:33`. 다만 **바인딩 주소가 `0.0.0.0` 인지 `127.0.0.1` 인지 구분해 주는 캡처(`ss -tlnp` 등)가 evidence 전체에 0건**이고, 남아 있는 접속 시도는 `curl http://127.0.0.1:15034` 뿐이다(`evidence/deadlock_ps_top.txt:81-90`). **[2026-09-21 보완]** `src/experiments/lib_experiment.sh` 의 `_snapshot_bind_addr()` 가 앱 기동 직후 `ss -tlnp \| grep 15034` 를 `*_ps_top.txt` 에 남기도록 배선됐다. 제출본 `evidence/` 는 그 이전 실행이라 **판정은 그대로 🟡** 이고, 다음 실행부터 `evidence_live/*_ps_top.txt` 에 주소 증거가 자동으로 쌓인다 |
 | **R2** | 메모리 누수 원인 규명 및 리포팅 | ✅ 충족 | `reports/01_oom_report.md` 361줄 — Description/Evidence/RCA/Workaround 4단 완비 |
 | **R2-1** | `monitor.sh` 로 대상 프로세스 물리 메모리 증가 관측 | ✅ 충족 | `evidence/oom_monitor.log:155-164` — `monitor.sh` 가 직접 append 한 관제 라인 `PROC_RSS:42.7MB → 242.7MB`(27초). 고해상도 계열 `17.7 → 267.7MB` 는 `evidence/oom_monitor.log:227-236`. **`SYS_MEM`(37.4→37.8%) 이 아니라 `PROC_RSS` 가 근거임을 명시**(`reports/01_oom_report.md:33-43`) — 명세 해설이 경고한 함정을 정면으로 다룸. 수집 명령도 헤더에 보존(`evidence/oom_monitor.log:18-24`, `while :; do bash src/monitor.sh; sleep 3; done` — 스크립트 무수정) |
 | **R2-2** | MemoryGuard 강제 종료 핵심 로그 식별 | ✅ 충족 | `evidence/oom_app.log:74-75` — `[CRITICAL] [MemoryGuard] Memory limit exceeded (275MB >= 256MB)` + `Self-terminating process 2738539`. 리포트는 PDF 예시의 `SELF-TERMINATED` 배너가 이 바이너리에 **없음을 실측으로 정정**(`reports/01_oom_report.md:27`) — 예시 문자열 베껴 쓰기를 하지 않았다 |
@@ -446,7 +446,7 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 | **R3-3** | `CPU_MAX_OCCUPY` 조정 → 종료 여부/생존 시간 변화, Before & After | ✅ 충족 | Before 80 (0m30s 사망) / After 10 (3m00s 생존) — `evidence/cpu_monitor.log:205-214` vs `:216-271`. 나아가 5개 값 스윕(95/80/60/50/10)으로 **"상향은 효과 0, 하향이 유효"** 라는 반직관적 결론을 실측으로 뒤집고 실험 스크립트까지 고쳤다(`evidence/cpu_monitor.log:286-300`, `src/experiments/02_cpu.sh:29-41`). 명세 함정 3("After 에도 똑같이 죽었다로 끝내면 안 된다")을 회피 |
 | **R4** | 교착상태 진단 및 리포팅 | ✅ 충족 | `reports/03_deadlock_report.md` 321줄 — 4단 구조 완비 |
 | **R4-1** | PID 존재 + CPU/메모리·로그 정지 = 무응답 식별 | ✅ 충족 | `evidence/deadlock_ps_top.txt:56-61` (`ps -ef`/`ps -p` PID 생존, `STAT=SNl`, `ELAPSED 01:16`, `TIME 00:00:00`), 관제 `PROC_RSS` 17.7MB 76초 불변 + `PROC_CPU` 3.2→0.0% 감쇠(`evidence/deadlock_monitor.log:192-215`). 30s/120s/210s 반복 캡처에서 `VmRSS 18148kB`·`voluntary_ctxt_switches 14`·로그 파일 `1517 bytes`·mtime 이 **나노초까지 동일**(`evidence/deadlock_ps_top.txt:143-219`) — "느린 것"과 "멈춘 것"을 가르는 결정적 지표 |
-| **R4-2** | 마지막 로그로 스레드 간 순환 대기를 논리적으로 증명 | ✅ 충족 | `evidence/deadlock_app.log:82-94` — `Worker-Thread-1 LOCK ACQUIRED [Shared_Memory_A]` / `Worker-Thread-2 LOCK ACQUIRED [Socket_Pool_B]` → 각각 상대 락에 `WAITING … (Status: BLOCKED)`. 의존 그래프와 4대 조건 대조표는 `reports/03_deadlock_report.md:193-218`. 커널 레벨 뒷받침으로 `ps -L -o wchan` 의 **전 스레드 `futex_wait_queue`**(`evidence/deadlock_ps_top.txt:61-66`) — 명세 함정 5(스레드 단위 관찰)를 정확히 충족 |
+| **R4-2** | 마지막 로그로 스레드 간 순환 대기를 논리적으로 증명 | ✅ 충족 | `evidence/deadlock_app.log:82-94` — `Worker-Thread-1 LOCK ACQUIRED [Shared_Memory_A]` / `Worker-Thread-2 LOCK ACQUIRED [Socket_Pool_B]` → 각각 상대 락에 `WAITING … (Status: BLOCKED)`. 의존 그래프와 4대 조건 대조표는 `reports/03_deadlock_report.md:193-218`. 커널 레벨 뒷받침으로 `ps -L -o wchan` 의 **전 스레드 `futex_wait_queue`**(`evidence/deadlock_ps_top.txt:75-79`) — 명세 함정 5(스레드 단위 관찰)를 정확히 충족 |
 | **R4-3** | `MULTI_THREAD_ENABLE` 재현/회피 비교 | ✅ 충족 | Before(true)=부팅 9초 후 freeze / After(false)=3m00s 정상 — 비교표 `evidence/deadlock_monitor.log:274-302`, After 실측 스냅샷 `evidence/deadlock_ps_top.txt:102-122`(WCHAN 이 `futex_wait_queue`1 + `do_select`2 로 갈리고 `TIME+` 가 전진). "스레드 수는 같고 상태가 다르다"는 판별 기준을 명시(`reports/03_deadlock_report.md:292`) |
 | **R4-4** | (권장) 데드락 4대 조건 · 식사하는 철학자 학습 | ✅ 충족 | `docs/md/이론_지식.md:737-866`(§5 동시성·락·데드락, `:797` 식사하는 철학자), `docs/md/용어집.md:697-699`, 리포트 본문의 4대 조건 성립 근거표 `reports/03_deadlock_report.md:209-218`. 권장 항목이지만 실제 리포트 논증에 녹아 있다 |
 
@@ -474,9 +474,9 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 | --- | --- | --- |
 | 🚫 디컴파일·리버스 엔지니어링 금지 | ✅ 위반 없음 | `objdump\|readelf\|pyinstxtractor\|uncompyle\|decompil\|disassembl\|ghidra\|radare` 저장소 전체 grep **0건**. 오히려 `reports/02_cpu_report.md:250` 이 "바이너리 내부 구현은 리버스 엔지니어링 금지 대상이라 확인하지 않았다. 위 서술은 외부 관측만으로 세운 추론" 이라고 한계를 명시 |
 | 리눅스 표준 명령어/라이브러리만 사용 | ✅ 위반 없음 | 사용 도구는 `ps` `top` `free` `df` `ss`/`netstat` `awk` `stat` `pgrep` `kill` `curl` + `/proc` 뿐(`src/monitor.sh`, `src/experiments/lib_experiment.sh`). 별도 APM·프로파일러 설치 없음 |
-| 포트 15034 고정 | ✅ 위반 없음 | `src/05_env_and_keyfile.sh:35`, `src/02_firewall_allowlist.sh:33`, `src/07_cron_schedule.sh:27` 모두 15034 |
-| 자동화 스크립트 Bash 전용(저장소 자체 선언) | 🟡 문서 불일치 | `README.md:836` 이 "자동화 스크립트는 **Bash 로만**"이라고 선언하지만 `tools/build_docs.py`(Python, `pip install markdown pygments` 필요)가 존재한다. 다만 이는 **문서 HTML 빌더**로 분석·관제 경로 밖이며, 명세의 제약(§7)을 위반하는 것은 아니다 |
-| 격리 환경(Docker/VM) 권장 | 🟡 권장 미준수 | `README.md:730-746` 과 `demo.sh`/`verify_orbstack.sh` 는 OrbStack Ubuntu 머신 시나리오를 기술하지만, 제출 evidence 는 `AGENT_HOME=/home/ashofrondol/b12_sandbox/agent-app` 로 **개발 호스트에서 직접 실행**한 결과다(`evidence/oom_monitor.log:6,12`). 같은 호스트에서 `java`(RSS 19GB)·`grafana`·`loki` 가 돌고 있어(`evidence/oom_ps_top.txt:353-362`) 호스트 지표에 배경 부하가 섞인다. 리포트가 이를 스스로 밝히고 프로세스 단위 지표로 분리했으므로(`reports/02_cpu_report.md:207`) 결론에는 영향이 없다. 명세상 "권장"이라 감점 요소는 아니다 |
+| 포트 15034 고정 | ✅ 위반 없음 | `src/05_env_and_keyfile.sh:35`, `src/02_firewall_allowlist.sh:33`, `src/07_cron_schedule.sh:26` 모두 15034 |
+| 자동화 스크립트 Bash 전용(저장소 자체 선언) | ✅ 위반 없음 | 본 README `§7 제약 사항` 이 선언 범위를 "**분석·관제·검증 자동화는 Bash 로만**"으로 한정하고, 유일한 Python 인 `tools/build_docs.py` 가 **과제 산출물이 아닌 문서 HTML 빌더**임을 같은 자리에서 명시한다. 해당 경로(`src/**`, `verify_orbstack.sh`, `demo.sh`, `tools/check_req_ids.sh`)는 전부 Bash — 예외 0건 *(2026-09-21 문구 한정으로 해소)* |
+| 격리 환경(Docker/VM) 권장 | 🟡 권장 미준수 | 본 README `§5 빠른 실행 가이드` 와 `demo.sh`/`verify_orbstack.sh` 는 OrbStack Ubuntu 머신 시나리오를 기술하지만, 제출 evidence 는 `AGENT_HOME=/home/ashofrondol/b12_sandbox/agent-app` 로 **개발 호스트에서 직접 실행**한 결과다(`evidence/oom_monitor.log:6,11`). 같은 호스트에서 `java`(RSS 19GB)·`grafana`·`loki` 가 돌고 있어(`evidence/oom_ps_top.txt:353-362`) 호스트 지표에 배경 부하가 섞인다. 리포트가 이를 스스로 밝히고 프로세스 단위 지표로 분리했으므로(`reports/02_cpu_report.md:207`) 결론에는 영향이 없다. 명세상 "권장"이라 감점 요소는 아니다 |
 
 #### 보너스 과제
 
@@ -502,7 +502,8 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 
 1. **[경미 · R1-11] `0.0.0.0` 바인딩을 직접 보여 주는 캡처가 없다.**
    - 무엇이 부족한가: 포트가 LISTEN 이라는 사실은 부트 로그·`monitor.sh` 로 확인되지만, 바인딩 주소가 `0.0.0.0`(전 인터페이스)인지 `127.0.0.1`(루프백)인지 구분되는 출력이 evidence 전체에 없다. 명세 0.8 절의 학습 질문("`0.0.0.0` 과 `127.0.0.1` 바인딩은 보안상 무엇이 다른가")이 정조준하는 지점이다.
-   - 어떻게 고치면 되는가: 앱 기동 상태에서 `ss -tlnp | grep 15034` (또는 `ss -tln 'sport = :15034'`) 한 줄을 캡처해 `evidence/oom_ps_top.txt` 상단 부트 검증 블록에 추가하고, 리포트 R1 체크리스트에서 이를 인용한다. `src/experiments/lib_experiment.sh` 의 preflight 에 이 한 줄을 넣어 두면 재실행 시 자동으로 남는다.
+   - 어떻게 고치면 되는가: 앱 기동 상태에서 `ss -tlnp | grep 15034` (또는 `ss -tln 'sport = :15034'`) 한 줄을 캡처해 `*_ps_top.txt` 의 부트 검증 블록에 추가하고, 리포트 R1 체크리스트에서 이를 인용한다.
+   - **✅ 배선 완료 (2026-09-21).** `src/experiments/lib_experiment.sh` 에 `_snapshot_bind_addr()` 를 추가하고, 네 실험 전부(OOM/CPU 의 Before·After, Deadlock 의 Before·After, 스케줄링)에서 앱 기동 직후 한 번씩 호출한다. 같은 파일의 `preflight()` 에는 기동 **전** 포트 점유 상태를 보고하는 줄을 넣어, 잔존 프로세스가 물고 있는 포트를 앱의 것으로 오독하지 않게 했다. `evidence/` 는 이전 실행 산출물이라 **소급 적용되지 않는다** — 다음 실행부터 `evidence_live/*_ps_top.txt` 에 남는다.
 
 2. **[경미 · E2-1] `top`/`ps` 캡처만 보면 "CPU 급상승"이 보이지 않는다.**
    - 무엇이 부족한가: 요건은 "`top`/`ps`/관제로 급상승 구간을 캡처"인데, 실제 캡처값은 `%CPU 0.0` · `TIME+ 0.24초` · load average 무변화다. 상승은 `/proc` 델타표와 앱 자기보고 값에서만 보인다. 리포트가 이 불일치를 정직하게 서술한 것은 오히려 강점이지만, 채점자가 요건 문구만 대조하면 미비로 읽힐 수 있다.
@@ -512,13 +513,14 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
    - 무엇이 부족한가: 리포트는 Before 를 "exit 137"(OOM) / "exit 143"(CPU) 로 단언하지만, 그 **해당 실행 자체**의 종료 코드 출력은 evidence 에 없다. raw `exit_code=` 캡처는 형제 probe 에만 있다(`evidence/oom_monitor.log:340,348` / `evidence/cpu_monitor.log:309,325`). 파이프라인 구간에 남은 것은 After 의 `rc=2`(관측 종료)뿐이다(`evidence/oom_monitor.log:294`, `evidence/cpu_monitor.log:271`).
    - 어떻게 고치면 되는가: `src/experiments/lib_experiment.sh` 의 `_terminating_experiment` 가 워커 종료 후 `wait; echo "exit=$?"` 결과를 `*_monitor.log` 의 해당 구간 끝줄에 append 하도록 한 줄 추가한다. 그러면 Before 구간 자체에서 137/143 이 직접 증명된다.
 
-4. **[경미 · 문서] `README.md` 와 저장소 실물이 두 군데에서 어긋난다.**
-   - `README.md:605-606` 는 `bin/` 이 "비어 있음", "이 저장소에 바이너리는 포함되어 있지 않으니"라고 적었지만 실제로는 `bin/agent-leak-app`(6.5MB ELF)이 git 에 **추적되고 있다**(`git ls-files bin/` 확인). 해시가 evidence 헤더와 일치해 재현성 면에서는 오히려 큰 장점이므로, README 를 실물에 맞춰 "재현성을 위해 실험에 쓴 바이너리(md5 0fb02e…)를 포함한다"로 고치는 편이 낫다(운영 측 배포 정책상 재배포가 곤란하다면 반대로 파일을 제거하고 해시만 남긴다).
-   - `README.md:836` 의 "자동화 스크립트는 Bash 로만" 선언과 `tools/build_docs.py` 의 공존. "분석·관제 자동화는 Bash 전용, 문서 빌드는 예외"로 문구를 한정하면 해소된다.
+4. **[경미 · 문서] ✅ 해소됨 (2026-09-21) — `README.md` 와 저장소 실물이 두 군데에서 어긋났다.**
+   - `§2 디렉토리 구조` 의 `bin/` 항목이 "비어 있음", `§2` 아래 비고가 "이 저장소에 바이너리는 포함되어 있지 않으니"라고 적었지만 실제로는 `bin/agent-leak-app`(6.5MB ELF)이 git 에 **추적되고 있었다**(`git ls-files bin/` 확인). 해시가 evidence 헤더와 일치해 재현성 면에서는 오히려 장점이므로 **파일을 지우지 않고 문구를 실물에 맞췄다** — 두 곳 모두 md5 `0fb02e12554328b32e6e1adac861630e` 를 명시하고, `§5 빠른 실행 가이드` 의 `cp ~/Downloads/…` 안내도 "이미 포함됨, 교체할 때만"으로 바꿨다.
+   - `§7 제약 사항` 의 "자동화 스크립트는 Bash 로만" 선언과 `tools/build_docs.py` 의 공존 → 선언을 "**분석·관제·검증 자동화는 Bash 로만**"으로 한정하고, `build_docs.py` 가 과제 산출물이 아닌 문서 빌더임을 같은 자리에 적었다.
 
-5. **[경미 · 추적성] 저장소가 쓰는 자체 요구사항 ID(`B1-2-A1`, `B1-2-P1~P11`, `B1-2-E-OOM1`, `B1-2-C2`, `B1-2-B1~B3`)의 정의표가 어디에도 없다.**
-   - 무엇이 부족한가: 리포트·evidence·실험 스크립트 주석이 이 ID 로 근거를 달고 있는데(예: `reports/01_oom_report.md:107`, `evidence/oom_monitor.log:2`), ID → 원문 요구사항 매핑 문서가 없어 제3자가 추적할 수 없다.
-   - 어떻게 고치면 되는가: 본 README 최상단 "0. 과제 명세" 절(R1~R4 / D1~D2 / E1~E3 / B1)을 그대로 기준 ID 로 삼고, 부록에 `B1-2-A1 = R2-1` 식의 대조표 한 장을 추가한다. 리포트 본문의 ID 를 새 체계로 치환하면 채점자가 요건표와 1:1 로 맞춰 볼 수 있다.
+5. **[경미 · 추적성] ✅ 해소됨 (2026-09-21) — 자체 요구사항 ID(`B1-2-A1`, `B1-2-P1~P11`, `B1-2-E-OOM1`, `B1-2-C2`, `B1-2-B1~B3`)의 정의표가 없었다.**
+   - 무엇이 부족했나: 리포트·evidence·실험 스크립트 주석이 이 ID 로 근거를 달고 있는데(예: `reports/01_oom_report.md:107`, `evidence/oom_monitor.log:2`), ID → 원문 요구사항 매핑 문서가 없어 제3자가 추적할 수 없었다.
+   - 어떻게 고쳤나: **[docs/md/요구사항_ID_매핑.md](docs/md/요구사항_ID_매핑.md)** 에 `B1-2-P1~P11 ↔ R1-1~R1-11` / `B1-2-A1~A9 ↔ R2-1~R4-3` / `B1-2-E-* ↔ E1~E3` / `B1-2-B1~B3 ↔ B1-1~B1-3` / `B1-2-C1~C3 ↔ 0.6 절` 대조표를 만들었다. 리포트 본문의 ID 는 **치환하지 않았다** — 인용 줄번호가 전부 밀려 다른 근거가 거짓이 되기 때문이고, 대조표 하나로 같은 추적성을 얻을 수 있다.
+   - 표가 썩지 않게: `tools/check_req_ids.sh` 가 저장소에서 쓰이는 모든 `B1-2-*` ID 를 모아 대조표에 정의가 없으면 **exit 1** 로 끝난다. 새 ID 를 만들면서 표를 갱신하지 않으면 검사가 실패한다.
 
 6. **[참고 · 결함 아님] 리포트가 스스로 밝힌 미확인 항목 3건** — ① `Worker-Thread-1/2` 와 LWP 의 1:1 대응 미확인(`reports/03_deadlock_report.md:70`), ② `Preempted` 가 진짜 선점인지 협조적 양보인지 미구분(`reports/04_scheduling_analysis.md:230`), ③ OOM 시 `dmesg` 미확인(`reports/01_oom_report.md:254`). 셋 다 명세가 요구하지 않은 범위이고, "확인하지 못했다"고 적은 태도 자체가 D1-2(객관적 증거) 기준에 부합한다. 더 깊이 가고 싶다면 ①은 `/proc/<pid>/task/<tid>/comm` 을, ③은 `dmesg -T | grep -i oom` 을 캡처하면 된다.
 
@@ -527,20 +529,23 @@ CPU/메모리 변화가 없고 로그 출력도 완전히 멈춘 무응답 상�
 #### 🧪 실행 검증 기록
 
 저장소를 변경하지 않고 네트워크·설치 없이 가능한 범위만 수행했다.
+단 `(2026-09-21 추가)` 로 표시된 행은 같은 날 개선 작업 중에 돌린 것이고, 그 작업은 저장소를 변경했다.
 
 | 검증 | 명령 | 결과 |
 | --- | --- | --- |
-| 셸 문법 검사 (전 스크립트) | `for f in $(find . -name '*.sh' -not -path './.git/*'); do bash -n "$f"; done` | **19개 전부 OK** (`demo.sh`, `verify_orbstack.sh`, `src/*.sh` 11개, `src/experiments/*.sh` 6개) — 구문 오류 0건 |
+| 셸 문법 검사 (전 스크립트) | `for f in $(find . -name '*.sh' -not -path './.git/*'); do bash -n "$f"; done` | **20개 전부 OK** (`demo.sh`, `verify_orbstack.sh`, `src/*.sh` 11개, `src/experiments/*.sh` 6개, `tools/check_req_ids.sh` 1개) — 구문 오류 0건 |
+| 요구사항 ID 매핑 검사 *(2026-09-21 추가)* | `bash tools/check_req_ids.sh` | ✓ 저장소가 쓰는 `B1-2-*` ID **전부** `docs/md/요구사항_ID_매핑.md` 에 정의됨(개수는 검사 출력이 직접 말해 준다). 일부러 매핑표에 없는 번호의 `P` 계열 ID 를 넣어 **exit 1 · 사용처 파일 출력**을 확인하고 원복함 (이 행을 쓰다가 검사가 실제로 한 번 더 물었다 — README 에 적은 예시 ID 까지 잡는다) — 깨지는 검사임이 실증됐다 |
+| 검증 드라이버 종료 코드 *(2026-09-21 추가)* | `verify_orbstack.sh` 의 `main()` 마지막 `return "$EXP_WARN"` | `EXP_WARN=0 → exit 0` / `EXP_WARN=1 → exit 1` 양쪽 확인. 이전에는 실험이 PASS 아니어도 항상 0 이라 CI·래퍼가 실패를 볼 수 없었다. `demo.sh` 는 코드를 받아 안내 출력 후 그대로 전파한다. 스텁으로 `verify` 종료 코드 0/1 × `evidence_live` 비었음/채워짐 4가지 조합을 실제로 돌려 `demo.sh` 종료 코드와 안내 도달을 확인했다 — 이때 갓 클론한 상태(`evidence_live/` 에 `README.md` 뿐)에서 산출물 목록 출력의 `ls … | grep -v …` 파이프라인이 `pipefail` 로 1 을 내며 **verify 가 성공(0)했는데도 `demo.sh` 가 1 로 죽고 전파 코드에 도달조차 못 하는** 것을 발견해, 두 목록 출력에 `|| true` 를 붙여 표시 실패가 검증 결과를 덮어쓰지 못하게 했다 |
 | 바이너리 동일성 | `md5sum bin/agent-leak-app` | `0fb02e12554328b32e6e1adac861630e` — `evidence/oom_monitor.log:8` 이 기록한 해시와 **일치**. evidence 가 이 저장소의 바이너리에서 나왔음이 확인됨 |
 | 리버스 엔지니어링 흔적 | `grep -rniE "objdump\|readelf\|pyinstxtractor\|uncompyle\|decompil\|disassembl\|ghidra\|radare" --include='*.sh' --include='*.md' --include='*.py' --include='*.txt' --include='*.log' .` | **0건** (용어집의 용어 설명 제외) |
-| 바인딩 주소 근거 | `grep -rn "0\.0\.0\.0:15034\|ss -tln\|netstat -tln\|LISTEN" evidence/` | 주석 1줄뿐, 실제 `ss` 출력 캡처 **0건** → R1-11 부분 충족 판정의 근거 |
+| 바인딩 주소 근거 | `grep -rn "0\.0\.0\.0:15034\|ss -tln\|netstat -tln\|LISTEN" evidence/` | 주석 1줄뿐, 실제 `ss` 출력 캡처 **0건** → R1-11 부분 충족 판정의 근거. *(2026-09-21: `_snapshot_bind_addr()` 배선 완료 — 리스너가 있을 때 `0.0.0.0:15034` 줄을, 없을 때 "LISTEN 없음" 을 남기는 것을 양쪽 다 실행해 확인. 제출본 `evidence/` 에는 소급되지 않는다)* |
 | 리포트↔evidence 줄번호 대조 | `sed -n` 으로 인용 구간 직접 열람 (`oom_app.log:34-58,63-78` / `oom_monitor.log:150-170,225-240,300-370` / `oom_ps_top.txt:290-372` / `cpu_monitor.log:280-340` / `cpu_top_ps.txt:300-350` / `deadlock_ps_top.txt:78-95,140-226` / `deadlock_monitor.log:274-302` / `scheduling_workers.log:30-70,170-206`) | 표본으로 확인한 인용 **전부 일치**. 리포트 본문에 붙은 `원본: …:Lxx-yy` 링크가 실제 줄 내용과 맞다 |
 
 **미실행 항목과 이유**
 
 - `bin/agent-leak-app` 실행 / `src/monitor.sh` 실행 / `src/experiments/*.sh` 실행 — **미실행**. 앱 실행은 `$AGENT_HOME`·`$AGENT_LOG_DIR` 디렉터리 생성과 로그 파일 쓰기를 동반해 "저장소·시스템 무변경" 규칙에 어긋나고, `monitor.sh` 는 앱이 떠 있어야만 Health Check 를 통과하며 `$AGENT_LOG_DIR` 에 append 한다.
 - `src/0X_*.sh` setup 스크립트 — **미실행**. `apt-get install`(acl·ufw·cron), 계정 생성, `sudo` 시스템 변경을 수행한다.
-- `tools/build_docs.py` — **미실행**. `markdown`·`pygments` 설치가 필요하고(`README.md:857`) 설치는 금지 범위다. 단, `docs/html/index.html` 산출물이 이미 존재함은 확인했다.
+- `tools/build_docs.py` — **미실행**. `markdown`·`pygments` 설치가 필요하고(본 README `§9 문서 빌드`) 설치는 금지 범위다. 단, `docs/html/index.html` 산출물이 이미 존재함과 `python3 -m py_compile` 통과는 확인했다.
 
 ---
 
@@ -586,7 +591,10 @@ codyssey_B1-2/
 │
 ├── docs/
 │   ├── md/
-│   │   └── 이론_지식.md            ← 컴퓨터 구조 · 메모리 · CPU · 동시성 (필독)
+│   │   ├── 이론_지식.md            ← 컴퓨터 구조 · 메모리 · CPU · 동시성 (필독)
+│   │   ├── 용어집.md               ← 미션에 나오는 용어 정의
+│   │   ├── 평가_문항.md            ← 구술 평가 대비 문답
+│   │   └── 요구사항_ID_매핑.md     ← B1-2-* 자체 ID ↔ 명세 원문 ID(R/D/E/B) 대조표
 │   └── html/
 │       └── index.html              ← tools/build_docs.py 가 생성하는 정적 사이트
 │
@@ -602,8 +610,10 @@ codyssey_B1-2/
 │   ├── deadlock_monitor.log / deadlock_app.log / deadlock_ps_top.txt
 │   └── scheduling_workers.log / scheduling_top_h.txt
 │
-├── bin/                            ← 운영 측 제공 agent-leak-app 을 두는 자리 (비어 있음)
-│   └── (agent-leak-app)            ← 학습자가 직접 배치 — 이 저장소에는 포함 안 됨
+├── bin/                            ← 실험에 실제로 쓴 agent-leak-app (재현성 위해 git 추적)
+│   └── agent-leak-app              ← md5 0fb02e12554328b32e6e1adac861630e
+│                                      evidence/ 전 파일 헤더가 기록한 해시와 동일 =
+│                                      제출 로그가 이 파일에서 나왔음이 증명된다
 │
 ├── src/                            ← B1-1 에서 가져온 인프라 자동화 스크립트
 │   ├── monitor.sh                  ← 시스템 상태 수집·로깅 (cron 매분)
@@ -626,12 +636,13 @@ codyssey_B1-2/
 │       └── 04_scheduling.sh        ← 스케줄링 추론 데이터 수집 (보너스)
 │
 └── tools/
-    └── build_docs.py               ← .md → docs/html/index.html 빌더
+    ├── build_docs.py               ← .md → docs/html/index.html 빌더 (과제 산출물 아님 — §7 참고)
+    └── check_req_ids.sh            ← 쓰이는 B1-2-* ID 가 매핑표에 전부 있는지 검사 (없으면 exit 1)
 ```
 
 > B1-1 과 가장 큰 차이는 두 가지다:
 > 1. `src/05_env_and_keyfile.sh` 가 B1-2 사양으로 바뀌었다 (key 파일명, key 경로 의미, 실험용 ENV 3종 추가).
-> 2. `src/06_deploy_app_and_scripts.sh` 의 바이너리 이름이 `agent-leak-app` 으로 바뀌었다. **이 저장소에 바이너리는 포함되어 있지 않으니** 운영 측이 제공한 파일을 `bin/agent-leak-app` 에 배치해야 한다.
+> 2. `src/06_deploy_app_and_scripts.sh` 의 바이너리 이름이 `agent-leak-app` 으로 바뀌었다. **바이너리는 `bin/agent-leak-app` 으로 이 저장소에 포함돼 있다**(md5 `0fb02e12554328b32e6e1adac861630e`) — 제출 evidence 의 헤더 해시와 같은 파일이라, 클론만 하면 같은 실험을 그대로 재현할 수 있다. 다른 빌드(x86/arm64)로 바꾸려면 같은 경로에 덮어쓰면 된다.
 
 ---
 
@@ -704,12 +715,13 @@ export MULTI_THREAD_ENABLE="false"
 
 #### (A) 한 줄 자동 실행 — 권장 (macOS)
 
-운영 측 제공 `agent-leak-app` 을 `bin/` 에 둔 뒤, 머신 생성 → §1~§7 setup → agent-leak-app
-부트 검증 → monitor/cron 확인 → 3대 장애 실험 → 증거 수집까지 한 번에 돌린다.
+`bin/agent-leak-app` 은 이미 저장소에 들어 있다. 클론한 그대로, 머신 생성 → §1~§7 setup →
+agent-leak-app 부트 검증 → monitor/cron 확인 → 3대 장애 실험 → 증거 수집까지 한 번에 돌린다.
 증거는 `./.verify-artifacts/` 에 모인다.
 
 ```bash
-cp ~/Downloads/agent-leak-app bin/agent-leak-app   # 운영 측 제공 바이너리 배치
+# bin/agent-leak-app 은 이미 포함돼 있다. 다른 빌드로 교체할 때만:
+#   cp ~/Downloads/agent-leak-app bin/agent-leak-app
 
 ./demo.sh                 # 시연 모드(섹션마다 엔터) + 실험 전체(실측)
 ./demo.sh --quick         # 장애 실험 대기시간 단축 (라이브 시연 권장)
@@ -733,7 +745,7 @@ FRESH=1 ./verify_orbstack.sh          # 머신 깨끗이 재생성
 brew install orbstack
 orb create ubuntu:24.04 codyssey-b1-2
 
-cp ~/Downloads/agent-leak-app bin/agent-leak-app
+# bin/agent-leak-app 은 저장소에 포함돼 있다 (교체할 때만 cp)
 orb push -m codyssey-b1-2 src/*.sh bin/agent-leak-app /tmp/
 
 orb shell -m codyssey-b1-2
@@ -833,7 +845,11 @@ bash src/report.sh "2026-08-26 09:02:37" "2026-08-26 09:03:11"   # 구간 지정
 - 사용 가능 도구: `monitor.sh`, `ps`, `top`, `htop`, `pstree`, `kill`, `vmstat`, `/proc` 등 리눅스 표준 도구
 - **바이너리 디컴파일/리버스 엔지니어링 금지** — 외부 관측 정보(로그/관제)만으로 추론
 - 일반 계정으로만 실행 (root 금지)
-- 자동화 스크립트는 **Bash 로만**
+- **분석·관제·검증 자동화 스크립트는 Bash 로만** — `src/**`, `verify_orbstack.sh`, `demo.sh`,
+  `tools/check_req_ids.sh` 가 전부 여기에 해당하고 예외 없이 Bash 다
+  - 예외는 `tools/build_docs.py` 하나뿐이다. 이것은 **과제 산출물이 아니라 문서 HTML 빌더**로,
+    장애 재현·관제·증거 수집 경로 바깥에 있다. 한 번도 실행하지 않아도 리포트와 evidence 는
+    그대로 완전하다 (§9 문서 빌드 참고)
 
 ---
 
@@ -861,6 +877,15 @@ python3 tools/build_docs.py            # docs/html/index.html 생성
 ```
 
 생성된 `docs/html/index.html` 은 **단일 파일·외부 파일 없음** 으로 만들어져 어디로 옮겨도 그대로 열린다. 좌측 사이드바에서 문서 간 이동 + 우측에 현재 문서 목차가 같이 보인다.
+
+### 9.1 요구사항 ID 검사 (의존성 없음)
+
+리포트·증거가 쓰는 자체 ID(`B1-2-A1` 등)가 [docs/md/요구사항_ID_매핑.md](docs/md/요구사항_ID_매핑.md) 에
+전부 정의돼 있는지 검사한다. 설치도 네트워크도 필요 없고 Bash 만 있으면 된다.
+
+```bash
+bash tools/check_req_ids.sh     # 정의 없는 ID 가 하나라도 있으면 exit 1
+```
 
 ---
 

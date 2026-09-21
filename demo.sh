@@ -137,7 +137,11 @@ export QUICK="$QUICK_MODE"
 export RUN_EXPERIMENTS="$RUN_EXP"
 
 banner "▶ verify_orbstack.sh 실행 (MACHINE=$MACHINE_NAME, FRESH=${FRESH:-0}, NARRATE=$NARRATE, QUICK=$QUICK, RUN_EXPERIMENTS=$RUN_EXPERIMENTS)"
-./verify_orbstack.sh
+# verify_orbstack.sh 는 PASS 못 한 실험 파이프라인이 있으면 1 로 끝난다.
+# set -e 로 여기서 바로 죽으면 "어디에 증거가 쌓였는지" 안내가 통째로 사라져
+# 오히려 실패를 조사하기 어려워진다. 코드를 들고 있다가 안내 출력 후 마지막에 그대로 전파한다.
+VERIFY_RC=0
+./verify_orbstack.sh || VERIFY_RC=$?
 
 # ── 결과 안내 + Finder 열기 ──────────────────────────────────────────────────
 ART_DIR="$(pwd)/.verify-artifacts"
@@ -145,10 +149,13 @@ LIVE_DIR="$(pwd)/evidence_live"
 banner "✅ 시연 완료 — 산출물 안내"
 printf "  📁  %s   ${D}(검증 산출물)${R}\n" "$ART_DIR"
 printf "\n${D}파일 목록:${R}\n"
-ls -lh "$ART_DIR" 2>/dev/null | sed 's/^/    /'
+# 목록 출력은 '안내'일 뿐이다. set -euo pipefail 아래에서 디렉토리가 비었거나 없으면
+# ls/grep 이 1~2 로 끝나 파이프라인이 실패하고, 아래 산출물 설명과 마지막
+# exit "$VERIFY_RC" 까지 통째로 건너뛴다. 표시 실패가 검증 결과를 덮어쓰면 안 된다.
+ls -lh "$ART_DIR" 2>/dev/null | sed 's/^/    /' || true
 printf "\n  📁  %s   ${D}(실험 원본 증거 — 실행 중 실시간 누적)${R}\n" "$LIVE_DIR"
 printf "${D}파일 목록:${R}\n"
-ls -lh "$LIVE_DIR" 2>/dev/null | grep -v '^total\|README' | sed 's/^/    /'
+ls -lh "$LIVE_DIR" 2>/dev/null | grep -v '^total\|README' | sed 's/^/    /' || true
 
 cat <<EOF
 
@@ -212,3 +219,10 @@ if [[ "$ENTER_SHELL" == "1" ]]; then
     banner "▶ 머신 셸로 진입 (exit 으로 빠져나오기)"
     orb shell -m "$MACHINE_NAME"
 fi
+
+# ── 검증 결과를 종료 코드로 전파 (CI/래퍼가 읽을 수 있도록) ─────────────────
+if [[ "$VERIFY_RC" != "0" ]]; then
+    printf "\n${Y}⚠  verify_orbstack.sh 가 %s 로 끝났다 — PASS 못 한 실험 파이프라인이 있다.${R}\n" "$VERIFY_RC"
+    printf "${D}   확인: cat %s/experiments.out${R}\n\n" "$ART_DIR"
+fi
+exit "$VERIFY_RC"

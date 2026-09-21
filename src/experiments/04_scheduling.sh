@@ -49,6 +49,9 @@ experiment_scheduling() {
     #        태그 이름을 하드코딩하지 않고 "…Worker…" / "…Thread…" 대괄호 태그를 포괄 매칭한다.
     grep -E "$WORKER_TAG" "$APP_LOG" > "$WK" 2>/dev/null || true
     top -H -bn1 -p "$pid" > "$TH" 2>/dev/null || true
+    # ↑ 위 줄이 '>' 로 $TH 를 덮어쓴다. 바인딩 증거는 반드시 그 뒤에 append 해야 남는다.
+    # 앱이 아직 살아 있는 지점이므로(kill_app 이전) 주소가 그대로 찍힌다.
+    _snapshot_bind_addr "$TH"
     kill_app "$pid"; CURRENT_PID=""
 
     local lines workers
