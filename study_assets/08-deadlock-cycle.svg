@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="520" viewBox="0 0 820 520" role="img" aria-labelledby="title desc">
+<title id="title">서로의 열쇠를 쥐고 기다린다 — 로그로 복원한 순환 대기</title>
+<desc id="desc">앱 로그에 따르면 09:12:57,952 에 Worker-Thread-1 은 Shared_Memory_A 를, Worker-Thread-2 는 Socket_Pool_B 를 잡았다. 약 2초 뒤 Worker-Thread-2 는 A 를, Worker-Thread-1 은 B 를 기다리며 BLOCKED 가 되어 T1 → B → T2 → A → T1 고리가 닫혔고, 메인 스레드는 두 워커의 종료를 기다린다. 상호 배제·점유 대기·비선점·순환 대기 네 조건이 모두 성립했고, 락 순서를 통일하면 순환이 깨진다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="820" height="520"/>
+<text class="th" x="24" y="34">서로의 열쇠를 쥐고 기다린다 — 로그로 복원한 순환 대기</text>
+<text class="ts" x="24" y="56">파랑 = 스레드 · 보라 = 자원(락) · 초록 실선 = 쥐고 있음 · 빨간 점선 = 기다리는 중 · 회색 점선 = 메인의 조인 대기</text>
+<rect class="box" x="262" y="72" width="296" height="50" rx="10"/>
+<text class="tb" x="410" y="92" text-anchor="middle">메인 <tspan class="mono">[AgentWorker]</tspan></text>
+<text class="ts" x="410" y="112" text-anchor="middle">Waiting for worker threads… (조인 대기)</text>
+<text class="ts" x="582" y="92">ps -L: 세 스레드 모두</text>
+<text class="mono" x="582" y="111">futex_wait_queue</text>
+<line class="ln dash" x1="300" y1="122" x2="206" y2="156" marker-end="url(#arrow)"/>
+<line class="ln dash" x1="520" y1="122" x2="614" y2="156" marker-end="url(#arrow)"/>
+<rect class="blue" x="80" y="160" width="200" height="52" rx="10"/>
+<text class="mono tb c-blue" x="180" y="182" text-anchor="middle">Worker-Thread-1</text>
+<text class="ts" x="180" y="202" text-anchor="middle">쥔 것 A · 원하는 것 B</text>
+<rect class="blue" x="540" y="160" width="200" height="52" rx="10"/>
+<text class="mono tb c-blue" x="640" y="182" text-anchor="middle">Worker-Thread-2</text>
+<text class="ts" x="640" y="202" text-anchor="middle">쥔 것 B · 원하는 것 A</text>
+<rect class="yellow" x="304" y="160" width="212" height="52" rx="10"/>
+<text class="tb" x="410" y="181" text-anchor="middle">순환 고리</text>
+<text x="410" y="202" text-anchor="middle">T1 → B → T2 → A → T1</text>
+<rect class="purple" x="80" y="280" width="200" height="52" rx="10"/>
+<text class="mono tb c-purple" x="180" y="302" text-anchor="middle">Shared_Memory_A</text>
+<text class="ts" x="180" y="322" text-anchor="middle">자원 A (락 1개)</text>
+<rect class="purple" x="540" y="280" width="200" height="52" rx="10"/>
+<text class="mono tb c-purple" x="640" y="302" text-anchor="middle">Socket_Pool_B</text>
+<text class="ts" x="640" y="322" text-anchor="middle">자원 B (락 1개)</text>
+<line class="ln ln-green" x1="180" y1="280" x2="180" y2="216" marker-end="url(#arrow-green)"/>
+<line class="ln ln-green" x1="640" y1="280" x2="640" y2="216" marker-end="url(#arrow-green)"/>
+<text class="tb c-green" x="170" y="236" text-anchor="end">보유</text>
+<text class="mono" x="170" y="253" text-anchor="end">LOCK ACQUIRED</text>
+<text class="ts" x="170" y="270" text-anchor="end">09:12:57,952</text>
+<text class="tb c-green" x="650" y="236">보유</text>
+<text class="mono" x="650" y="253">LOCK ACQUIRED</text>
+<text class="ts" x="650" y="270">09:12:57,952</text>
+<path class="ln ln-red dash" d="M250,212 L250,234 L596,234 L596,276" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="423" y="256" text-anchor="middle">대기 · WAITING … BLOCKED  09:12:59,963</text>
+<path class="ln ln-red dash" d="M740,186 L776,186 L776,356 L136,356 L136,336" marker-end="url(#arrow-red)"/>
+<rect class="bg" x="309" y="343" width="294" height="26"/>
+<text class="ts c-red" x="456" y="361" text-anchor="middle">대기 · WAITING … BLOCKED  09:12:59,955</text>
+<rect class="box" x="24" y="380" width="772" height="116" rx="10"/>
+<text class="ts" x="40" y="402">교착상태 4조건 (Coffman) — 네 개가 모두 성립했다</text>
+<text x="40" y="428"><tspan class="tb">① 상호 배제</tspan><tspan class="ts"> — 락은 한 번에 한 스레드</tspan></text>
+<text x="420" y="428"><tspan class="tb">② 점유 대기</tspan><tspan class="ts"> — 쥔 채로 하나 더 요청</tspan></text>
+<text x="40" y="453"><tspan class="tb">③ 비선점</tspan><tspan class="ts"> — 남의 락을 뺏지 못함 (210초 뒤에도 그대로)</tspan></text>
+<text x="420" y="453"><tspan class="tb">④ 순환 대기</tspan><tspan class="ts"> — 위 노란 고리</tspan></text>
+<text class="tb c-green" x="40" y="480">하나만 깨도 풀린다 → 락 순서 통일 (모두 A 먼저, 그다음 B)</text>
+</svg>

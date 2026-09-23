@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" role="img" aria-labelledby="title desc">
+<title id="title">curl 을 15034 로 보내면 일어나는 일</title>
+<desc id="desc">curl 이 15034 포트로 연결하면 커널이 3-way handshake 를 대신 끝내고 연결과 요청 80바이트를 accept 큐에 넣어 둔다. agent-leak-app 은 accept 와 recv 를 하지 않아 curl 은 3초 뒤 0바이트로 끝나고(exit 28), ss 에는 LISTEN 1 1 과 CLOSE-WAIT 80 이 남는다. 정상 모드에서도 같으므로 curl 은 데드락 판별에 쓸 수 없다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="820" height="420"/>
+<text class="th" x="24" y="36">curl 을 15034 로 보내면 일어나는 일 (정상 모드)</text>
+<text class="ts" x="24" y="58">왼쪽에서 오른쪽으로 읽는다 · 연결은 커널이 대신 맺고, 앱은 그 연결을 꺼내 가지 않는다</text>
+<rect class="zone" x="192" y="84" width="408" height="120" rx="12"/>
+<text class="ts" x="208" y="104">커널 (앱 대신 처리)</text>
+<rect class="blue" x="24" y="120" width="136" height="64" rx="10"/>
+<text x="92" y="146" text-anchor="middle" class="tb c-blue">curl</text>
+<text x="92" y="168" text-anchor="middle" class="mono">--max-time 3</text>
+<rect class="green" x="212" y="120" width="172" height="64" rx="10"/>
+<text x="298" y="146" text-anchor="middle" class="tb c-green">① 3-way handshake</text>
+<text x="298" y="168" text-anchor="middle" class="ts">연결 수립 완료</text>
+<rect class="purple" x="412" y="120" width="172" height="64" rx="10"/>
+<text x="498" y="146" text-anchor="middle" class="tb c-purple">② accept 큐</text>
+<text x="498" y="168" text-anchor="middle" class="ts">연결 1개 · 요청 80 B</text>
+<rect class="box" x="636" y="120" width="160" height="64" rx="10"/>
+<text x="716" y="146" text-anchor="middle" class="mono">agent-leak-app</text>
+<text x="716" y="168" text-anchor="middle" class="ts c-red">③ accept·recv 안 함</text>
+<line class="ln ln-blue" x1="160" y1="152" x2="208" y2="152" marker-end="url(#arrow-blue)"/>
+<line class="ln ln-blue" x1="384" y1="152" x2="408" y2="152" marker-end="url(#arrow-blue)"/>
+<line class="ln ln-red dash" x1="584" y1="152" x2="632" y2="152"/>
+<rect class="bg" x="594" y="136" width="28" height="30"/>
+<text x="608" y="158" text-anchor="middle" class="tb c-red">✕</text>
+<line class="ln ln-orange dash" x1="92" y1="184" x2="92" y2="252" marker-end="url(#arrow-orange)"/>
+<text class="ts c-orange" x="104" y="228">3초 뒤 포기</text>
+<line class="ln ln-purple dash" x1="498" y1="184" x2="498" y2="252" marker-end="url(#arrow-purple)"/>
+<text class="ts c-purple" x="510" y="236">ss -tan 으로 보면</text>
+<rect class="orange" x="24" y="256" width="352" height="86" rx="10"/>
+<text x="40" y="282" class="tb c-orange">curl 쪽 결과</text>
+<text x="40" y="306" class="mono">… with 0 bytes received</text>
+<text x="40" y="328" class="mono">curl_exit=28 (시간 초과)</text>
+<rect class="purple" x="412" y="256" width="384" height="86" rx="10"/>
+<text x="428" y="282" class="tb c-purple">커널 쪽 상태</text>
+<text x="428" y="306" class="mono">LISTEN      1  1  (대기 1 / 백로그 1)</text>
+<text x="428" y="328" class="mono">CLOSE-WAIT 80  0  (안 읽힌 80 B)</text>
+<text class="ts" x="24" y="376">정상 모드(MULTI_THREAD_ENABLE=false)에서 잰 값이다. 데드락 모드에서도 똑같이 나온다.</text>
+<text class="ts c-red" x="24" y="398">→ curl 타임아웃은 데드락의 증거가 될 수 없다(대조군에서도 같은 결과).</text>
+</svg>

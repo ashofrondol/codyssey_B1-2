@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="500" viewBox="0 0 880 500" role="img" aria-labelledby="title desc">
+<title id="title">34초 동안의 메모리 — 프로세스는 250MB 늘었고 호스트는 거의 그대로</title>
+<desc id="desc">MEMORY_LIMIT=256 으로 실행한 앱의 프로세스 메모리(PROC_RSS)는 3초마다 25MB 씩 17.7MB 에서 267.7MB 까지 올랐고, 앱 로그의 Current Heap 이 275MB 가 되어 256MB 한도를 넘는 순간 MemoryGuard 가 프로세스를 끝냈다(exit 137, 생존 0m34s). 같은 구간 호스트 전체 메모리 사용률은 37.4% 에서 37.8% 로 거의 변하지 않았다. 오른쪽 MEMORY_LIMIT=512 실행은 525MB 에 닿을 때마다 캐시를 비우고 다시 쌓으며 3분 동안 종료되지 않았다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="500"/>
+<text x="24.0" y="32.0" class="th">34초 동안의 메모리 — 프로세스는 250MB 늘었고 호스트는 거의 그대로</text>
+<text x="24.0" y="54.0" class="ts">출처: evidence/oom_monitor.log L227-236 · evidence/oom_app.log L63-73 · 오른쪽 After 는 같은 파일 L238-293</text>
+<text x="84.0" y="88.0" class="tb">Before: MEMORY_LIMIT=256</text>
+<text x="76.0" y="394.5" text-anchor="end" class="ts">0</text>
+<line class="ln" x1="84" y1="315.3" x2="564" y2="315.3" stroke-opacity="0.22" stroke-width="1"/>
+<text x="76.0" y="319.8" text-anchor="end" class="ts">100</text>
+<line class="ln" x1="84" y1="240.7" x2="564" y2="240.7" stroke-opacity="0.22" stroke-width="1"/>
+<text x="76.0" y="245.2" text-anchor="end" class="ts">200</text>
+<line class="ln" x1="84" y1="166.0" x2="564" y2="166.0" stroke-opacity="0.22" stroke-width="1"/>
+<text x="76.0" y="170.5" text-anchor="end" class="ts">300</text>
+<text x="76.0" y="150.0" text-anchor="end" class="ts">MB</text>
+<line class="ln" x1="84.0" y1="390" x2="84.0" y2="395"/>
+<text x="84.0" y="410.0" text-anchor="middle" class="ts">0</text>
+<line class="ln" x1="217.3" y1="390" x2="217.3" y2="395"/>
+<text x="217.3" y="410.0" text-anchor="middle" class="ts">10</text>
+<line class="ln" x1="350.7" y1="390" x2="350.7" y2="395"/>
+<text x="350.7" y="410.0" text-anchor="middle" class="ts">20</text>
+<line class="ln" x1="484.0" y1="390" x2="484.0" y2="395"/>
+<text x="484.0" y="410.0" text-anchor="middle" class="ts">30</text>
+<line class="ln" x1="84" y1="390" x2="564" y2="390"/>
+<line class="ln" x1="84" y1="390" x2="84" y2="162.0"/>
+<text x="324.0" y="432.0" text-anchor="middle" class="ts">실행 후 경과(초) · 앱 실행 09:02:36 = 0</text>
+<line class="ln ln-red dash" x1="84" y1="198.9" x2="564" y2="198.9"/>
+<rect class="bg" x="88" y="168.9" width="148" height="28"/>
+<text x="94.0" y="188.9" class="mono c-red">MEMORY_LIMIT=256</text>
+<path class="ln ln-blue" d="M124.0,371.3 H164.0 V352.7 H204.0 V334.0 H244.0 V315.3 H284.0 V296.7 H324.0 V278.0 H364.0 V259.3 H404.0 V240.7 H444.0 V222.0 H484.0 V203.3 H524.0 V184.7" stroke-width="2"/>
+<polyline class="ln ln-purple" points="97.3,376.8 150.7,358.1 190.7,339.5 230.7,302.1 284.0,283.5 324.0,264.8 364.0,246.1 417.3,227.5 457.3,208.8 497.3,190.1" stroke-width="2.2"/>
+<circle class="purple" cx="97.3" cy="376.8" r="4"/>
+<circle class="purple" cx="150.7" cy="358.1" r="4"/>
+<circle class="purple" cx="190.7" cy="339.5" r="4"/>
+<circle class="purple" cx="230.7" cy="302.1" r="4"/>
+<circle class="purple" cx="284.0" cy="283.5" r="4"/>
+<circle class="purple" cx="324.0" cy="264.8" r="4"/>
+<circle class="purple" cx="364.0" cy="246.1" r="4"/>
+<circle class="purple" cx="417.3" cy="227.5" r="4"/>
+<circle class="purple" cx="457.3" cy="208.8" r="4"/>
+<circle class="purple" cx="497.3" cy="190.1" r="4"/>
+<text x="92.0" y="272.0" class="ts c-blue">힙이 3초마다 +25MB</text>
+<text x="92.0" y="289.0" class="ts c-purple">RSS 도 같은 기울기로 증가</text>
+<line class="ln ln-red" x1="517.0" y1="177.7" x2="531.0" y2="191.7" stroke-width="3"/>
+<line class="ln ln-red" x1="517.0" y1="191.7" x2="531.0" y2="177.7" stroke-width="3"/>
+<line class="ln ln-red" x1="524.0" y1="148" x2="524.0" y2="174.7"/>
+<rect class="red" x="272" y="98" width="292" height="50" rx="8"/>
+<text x="286.0" y="118.0" class="mono c-red">275MB &gt;= 256MB</text>
+<text x="286.0" y="138.0" class="ts">Self-terminating → exit 137 (생존 0m34s)</text>
+<rect class="bg" x="342" y="300" width="220" height="66"/>
+<line class="ln ln-purple" x1="352" y1="318" x2="378" y2="318" stroke-width="2.2"/>
+<circle class="purple" cx="365" cy="318" r="4"/>
+<text x="386.0" y="323.0" class="ts">PROC_RSS (ps rss)</text>
+<path class="ln ln-blue" d="M352,348 H365 V338 H378" stroke-width="2"/>
+<text x="386.0" y="348.0" class="ts">앱 로그 Current Heap</text>
+<rect class="box" x="84" y="446" width="480" height="34" rx="8"/>
+<text x="324.0" y="468.0" text-anchor="middle">같은 구간 SYS_MEM (호스트 전체): 37.4% → 37.8%</text>
+<text x="632.0" y="88.0" class="tb">After: MEMORY_LIMIT=512</text>
+<text x="624.0" y="394.5" text-anchor="end" class="ts">0</text>
+<line class="ln" x1="632" y1="288.2" x2="848" y2="288.2" stroke-opacity="0.22" stroke-width="1"/>
+<text x="624.0" y="292.7" text-anchor="end" class="ts">250</text>
+<line class="ln" x1="632" y1="186.4" x2="848" y2="186.4" stroke-opacity="0.22" stroke-width="1"/>
+<text x="624.0" y="190.9" text-anchor="end" class="ts">500</text>
+<text x="624.0" y="150.0" text-anchor="end" class="ts">MB</text>
+<line class="ln" x1="632.0" y1="390" x2="632.0" y2="395"/>
+<text x="632.0" y="410.0" text-anchor="middle" class="ts">0</text>
+<line class="ln" x1="702.1" y1="390" x2="702.1" y2="395"/>
+<text x="702.1" y="410.0" text-anchor="middle" class="ts">60</text>
+<line class="ln" x1="772.1" y1="390" x2="772.1" y2="395"/>
+<text x="772.1" y="410.0" text-anchor="middle" class="ts">120</text>
+<line class="ln" x1="842.2" y1="390" x2="842.2" y2="395"/>
+<text x="842.2" y="410.0" text-anchor="middle" class="ts">180</text>
+<line class="ln" x1="632" y1="390" x2="848" y2="390"/>
+<line class="ln" x1="632" y1="390" x2="632" y2="162.0"/>
+<text x="740.0" y="432.0" text-anchor="middle" class="ts">경과(초) · 09:03:11 = 0</text>
+<polyline class="ln ln-green" points="633.2,382.8 636.7,372.5 641.3,362.3 644.8,352.2 648.3,342.0 653.0,331.8 656.5,311.4 660.0,301.2 663.5,291.0 668.2,280.9 671.7,270.7 676.4,260.5 679.9,250.3 683.4,240.1 688.0,229.9 691.5,219.8 695.0,199.4 699.7,189.2 703.2,179.0 706.7,382.7 710.2,382.7 714.9,372.5 718.4,362.3 723.1,342.0 726.6,331.8 730.1,321.6 734.7,311.4 738.2,301.3 741.8,291.1 746.4,280.9 749.9,270.7 753.4,260.5 756.9,250.3 761.6,229.9 765.1,219.8 768.6,209.6 773.3,199.4 776.8,189.2 781.4,179.0 785.0,362.3 788.5,362.3 793.1,362.3 796.6,352.2 800.1,342.0 803.6,331.8 808.3,321.6 811.8,311.4 815.3,301.3 820.0,291.1 823.5,270.7 828.2,260.5 831.7,250.3 835.2,240.1 839.8,229.9 843.3,219.8" stroke-width="2.2"/>
+<text x="740.0" y="150.0" text-anchor="middle" class="ts c-green">525MB 도달 → 캐시 비우기</text>
+<line class="ln ln-green" x1="703.2" y1="156" x2="703.2" y2="173.0" stroke-width="1.2" stroke-dasharray="3 3"/>
+<line class="ln ln-green" x1="781.4" y1="156" x2="781.4" y2="173.0" stroke-width="1.2" stroke-dasharray="3 3"/>
+<rect class="green" x="632" y="446" width="216" height="34" rx="8"/>
+<text x="740.0" y="468.0" text-anchor="middle" class="tb c-green">종료 없음 (&gt;3m00s)</text>
+</svg>

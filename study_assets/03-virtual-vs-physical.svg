@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="460" viewBox="0 0 880 460" role="img" aria-labelledby="title desc">
+<title id="title">예약(VSZ)과 실제 사용(RSS)은 다르다 — 쓸 때 RAM 이 붙는다</title>
+<desc id="desc">같은 파이썬 프로그램의 /proc/self/status 를 세 번 읽었다. 시작 때 VmSize 18876 kB, VmRSS 9836 kB 였고, mmap 으로 200MB 를 예약한 직후 VmSize 는 223676 kB 로 늘었지만 VmRSS 는 9900 kB 로 거의 그대로였다. 앞 100MB 에 페이지마다 1바이트를 쓴 뒤에야 VmRSS 가 112300 kB 로 102400 kB 늘었다. 이 앱의 OOM 실험에서도 RSS 18088 → 248524 kB, VSZ 23084 → 253520 kB 가 나란히 늘어, 잡은 메모리에 실제로 쓰고 있음을 보여 준다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="460"/>
+
+<text class="th" x="24" y="34">예약(VSZ)과 실제 사용(RSS)은 다르다</text>
+<text class="ts" x="24" y="56">같은 파이썬 프로그램의 /proc/self/status 를 세 번 읽은 값 (재실행 lazy.py) · 막대 길이 = 실제 크기 비율</text>
+<line class="ln" x1="363" y1="84" x2="363" y2="336"/>
+<line class="ln" x1="615" y1="84" x2="615" y2="336"/>
+<text class="tb" x="24" y="168">가상 주소</text>
+<text class="ts" x="24" y="186">(VmSize)</text>
+<text class="tb" x="24" y="266">물리 RAM</text>
+<text class="ts" x="24" y="284">(VmRSS)</text>
+
+<!-- column 1 -->
+<text class="tb" x="124" y="100">① 시작</text>
+<text class="ts" x="124" y="120">파이썬 프로그램만 뜬 상태</text>
+<rect class="box" x="126" y="158" width="18.9" height="26"/>
+<rect class="box" x="126" y="256" width="9.8" height="26"/>
+<text class="mono" x="124" y="148">VmSize 18876 kB</text>
+<text class="mono" x="124" y="304">VmRSS 9836 kB</text>
+
+<!-- column 2 -->
+<text class="tb" x="376" y="100">② 200MB 예약 직후</text>
+<text class="ts" x="376" y="120">mmap 으로 주소만 잡음</text>
+<rect class="box" x="378" y="158" width="18.9" height="26"/>
+<rect class="zone" x="396.9" y="158" width="204.8" height="26"/>
+<rect class="box" x="378" y="256" width="9.9" height="26"/>
+<text class="mono" x="376" y="148">VmSize 223676 kB</text>
+<text class="ts c-muted" x="600" y="148" text-anchor="end">+204800 kB</text>
+<rect class="yellow" x="372" y="284" width="112" height="28" rx="4"/>
+<text class="mono" x="376" y="304">VmRSS 9900 kB</text>
+<text class="ts tb" x="376" y="332">거의 그대로 (+64 kB)</text>
+
+<!-- column 3 -->
+<text class="tb" x="628" y="100">③ 앞 100MB 에 쓴 뒤</text>
+<text class="ts" x="628" y="120">페이지마다 1바이트씩 씀</text>
+<rect class="box" x="630" y="158" width="18.9" height="26"/>
+<rect class="purple" x="648.9" y="158" width="102.4" height="26"/>
+<rect class="zone" x="751.3" y="158" width="102.4" height="26"/>
+<rect class="box" x="630" y="256" width="9.9" height="26"/>
+<rect class="purple" x="639.9" y="256" width="102.4" height="26"/>
+<text class="mono" x="628" y="148">VmSize 223676 kB</text>
+<text class="ts c-muted" x="852" y="148" text-anchor="end">그대로</text>
+<rect class="yellow" x="624" y="284" width="124" height="28" rx="4"/>
+<text class="mono" x="628" y="304">VmRSS 112300 kB</text>
+<text class="ts tb" x="628" y="332">+102400 kB = 100MB</text>
+<text class="ts c-muted" x="499.3" y="224" text-anchor="middle">예약만 · RAM 연결 없음</text>
+<line class="ln ln-purple" x1="662.9" y1="186" x2="653.9" y2="252" marker-end="url(#arrow-purple)"/>
+<line class="ln ln-purple" x1="690.9" y1="186" x2="681.9" y2="252" marker-end="url(#arrow-purple)"/>
+<line class="ln ln-purple" x1="718.9" y1="186" x2="709.9" y2="252" marker-end="url(#arrow-purple)"/>
+<line class="ln ln-purple" x1="746.9" y1="186" x2="737.9" y2="252" marker-end="url(#arrow-purple)"/>
+<text class="ts c-purple" x="766" y="208">쓴 페이지만</text>
+<text class="ts c-purple" x="766" y="226">RAM 에 연결</text>
+<text class="ts" x="766" y="244">(페이지 = 4KB)</text>
+
+<rect class="box" x="24" y="348" width="832" height="58" rx="10"/>
+<text class="tb" x="40" y="372">이 앱 OOM 실험도 같다:</text>
+<text class="mono" x="222" y="372">RSS 18088 → 248524 kB · VSZ 23084 → 253520 kB</text>
+<text class="ts" x="40" y="394">RSS 가 VSZ 와 나란히 오른다 = 잡은 메모리에 실제로 쓰고 있다 → 그래서 RSS 가 누수의 지표 (reports/01_oom_report.md)</text>
+
+<!-- legend -->
+<rect class="box" x="24" y="424" width="22" height="14"/>
+<text class="ts" x="52" y="436">원래 쓰던 메모리</text>
+<rect class="zone" x="176" y="424" width="22" height="14"/>
+<text class="ts" x="204" y="436">점선 = 예약만, RAM 없음</text>
+<rect class="purple" x="370" y="424" width="22" height="14"/>
+<text class="ts" x="398" y="436">실제로 쓴 칸</text>
+<rect class="yellow" x="494" y="424" width="22" height="14" rx="3"/>
+<text class="ts" x="522" y="436">눈여겨볼 숫자</text>
+</svg>

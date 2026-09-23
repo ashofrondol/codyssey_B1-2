@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="480" viewBox="0 0 880 480" role="img" aria-labelledby="title desc">
+<title id="title">스레드 수는 같다 — 다른 것은 무엇을 기다리나와 시간이 흐르나</title>
+<desc id="desc">MULTI_THREAD_ENABLE=true(교착상태)와 false(정상)에서 스레드는 모두 3개다. 교착상태에서는 세 스레드 모두 futex_wait_queue 에 잠들어 TIME+ 와 문맥교환 횟수가 30초 동안 그대로이고 로그도 1517 bytes 에서 멈췄다. 정상에서는 메인만 futex 에서 조인 대기하고 두 워커는 do_select 에서 타이머를 기다리며 TIME+ 와 문맥교환이 늘고 로그도 2542 에서 4288 bytes 로 자랐다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="480"/>
+<text class="th" x="24" y="36">스레드 수는 같다 — 다른 것은 '무엇을 기다리나'와 '시간이 흐르나'</text>
+<text class="ts" x="24" y="58">같은 앱 · 같은 명령 · 스레드 3개씩 · 노란 줄 = 일을 맡은 워커 스레드, 회색 줄 = 메인 스레드</text>
+<rect class="red" x="24" y="76" width="408" height="240" rx="12"/>
+<text class="mono tb" x="40" y="104">MULTI_THREAD_ENABLE=true</text>
+<text class="tb c-red" x="248" y="104">교착상태</text>
+<text class="ts" x="46" y="130">스레드</text>
+<text class="ts" x="108" y="130">WCHAN (잠든 곳)</text>
+<text class="ts" x="256" y="130">TIME+</text>
+<text class="ts" x="336" y="130">문맥교환</text>
+<text class="ts" x="336" y="147">30초 전→후</text>
+<rect class="box" x="34" y="158" width="388" height="36" rx="8"/>
+<text class="tb" x="46" y="181">메인</text>
+<text class="mono" x="108" y="181">futex_wait_queue</text>
+<text class="mono" x="256" y="181">0:00.04</text>
+<text class="mono" x="336" y="181">10 → 10</text>
+<rect class="yellow" x="34" y="202" width="388" height="36" rx="8"/>
+<text class="tb" x="46" y="225">워커</text>
+<text class="mono" x="108" y="225">futex_wait_queue</text>
+<text class="mono c-red tb" x="256" y="225">0:00.00</text>
+<text class="mono c-red tb" x="336" y="225">10 → 10</text>
+<rect class="yellow" x="34" y="246" width="388" height="36" rx="8"/>
+<text class="tb" x="46" y="269">워커</text>
+<text class="mono" x="108" y="269">futex_wait_queue</text>
+<text class="mono c-red tb" x="256" y="269">0:00.00</text>
+<text class="mono c-red tb" x="336" y="269">10 → 10</text>
+<text class="ts" x="46" y="302">로그 1517 bytes · mtime 고정 — 한 줄도 안 늘어남</text>
+<rect class="green" x="448" y="76" width="408" height="240" rx="12"/>
+<text class="mono tb" x="464" y="104">MULTI_THREAD_ENABLE=false</text>
+<text class="tb c-green" x="680" y="104">정상</text>
+<text class="ts" x="470" y="130">스레드</text>
+<text class="ts" x="532" y="130">WCHAN (잠든 곳)</text>
+<text class="ts" x="680" y="130">TIME+</text>
+<text class="ts" x="760" y="130">문맥교환</text>
+<text class="ts" x="760" y="147">30초 전→후</text>
+<rect class="box" x="458" y="158" width="388" height="36" rx="8"/>
+<text class="tb" x="470" y="181">메인</text>
+<text class="mono" x="532" y="181">futex_wait_queue</text>
+<text class="mono" x="680" y="181">0:00.05</text>
+<text class="mono" x="760" y="181">24 → 24</text>
+<rect class="yellow" x="458" y="202" width="388" height="36" rx="8"/>
+<text class="tb" x="470" y="225">워커</text>
+<text class="mono" x="532" y="225">do_select</text>
+<text class="mono c-green tb" x="680" y="225">0:00.79</text>
+<text class="mono c-green tb" x="760" y="225">9 → 19</text>
+<rect class="yellow" x="458" y="246" width="388" height="36" rx="8"/>
+<text class="tb" x="470" y="269">워커</text>
+<text class="mono" x="532" y="269">do_select</text>
+<text class="mono c-green tb" x="680" y="269">0:00.47</text>
+<text class="mono c-green tb" x="760" y="269">14 → 44</text>
+<text class="ts" x="470" y="302">로그 2542 → 4288 bytes — 30초 동안 계속 늘어남</text>
+<rect class="box" x="24" y="332" width="832" height="40" rx="8"/>
+<text class="ts" x="440" y="357" text-anchor="middle">메인은 양쪽 모두 조인 대기라 futex · 카운터도 고정 → <tspan class="mono">/proc/&lt;pid&gt;/status</tspan> 한 줄(= 메인 값)로는 판별 불가</text>
+<text class="tb" x="24" y="404">판별 기준 = 워커가 futex 에 묶여 TIME+ 와 문맥교환이 멈췄는가</text>
+<text class="ts" x="24" y="432">출처 · WCHAN·TIME+ = 증거 <tspan class="mono">evidence/deadlock_ps_top.txt</tspan> (2026-08-26)</text>
+<text class="ts" x="24" y="452">문맥교환(voluntary)·로그 크기 = 재실행 <tspan class="mono">/proc/&lt;pid&gt;/task/&lt;tid&gt;/status</tspan> 30초 간격 (2026-09-23)</text>
+</svg>

@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="700" viewBox="0 0 880 700" role="img" aria-labelledby="title desc">
+<title id="title">00_run_experiments.sh oom 한 번이 거치는 함수들</title>
+<desc id="desc">OOM 파이프라인이 사전 점검, Before(MEMORY_LIMIT=256) 실행과 반복 관측, 종료 흔적 수집, After(MEMORY_LIMIT=512) 재실행, 판정 순서로 함수를 부르는 흐름이다. 반복 관측 중 샘플과 스냅샷은 oom_monitor.log, oom_ps_top.txt, oom_app.log 에 기록되고, 2026-09-23 재실행 결과는 Before 0m33s 에서 After 0m49s 이상 생존으로 PASS 였다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="700"/>
+<text class="th" x="24" y="30">bash 00_run_experiments.sh oom 한 번이 거치는 함수들</text>
+<text class="ts" x="24" y="52"><tspan class="c-blue">파랑 = 호출 순서</tspan> · <tspan class="c-purple">보라 점선 = 파일에 기록</tspan> · <tspan class="c-red">빨강 = 종료 감지</tspan> · <tspan class="c-green">초록 = 생존 · PASS</tspan> · lib = lib_experiment.sh</text>
+<text class="th" x="36" y="95.0" text-anchor="middle">①</text>
+<rect class="blue" x="64" y="66" width="231" height="46" rx="8"/>
+<text class="mono" x="179.5" y="86" text-anchor="middle">00_run_experiments.sh oom</text>
+<text class="ts" x="179.5" y="103" text-anchor="middle">처음 치는 명령</text>
+<line class="ln ln-blue" x1="295" y1="89.0" x2="319" y2="89.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="323" y="66" width="178" height="46" rx="8"/>
+<text class="mono" x="412" y="86" text-anchor="middle">preflight</text>
+<text class="ts" x="412" y="103" text-anchor="middle">lib_experiment.sh:531</text>
+<text class="ts" x="517" y="94">비-root · 폴더 · 바이너리 · 포트 비었나</text>
+<text class="th" x="36" y="165.0" text-anchor="middle">②</text>
+<rect class="box" x="64" y="136" width="150" height="46" rx="8"/>
+<text class="mono" x="139" y="156" text-anchor="middle">experiment_oom</text>
+<text class="ts" x="139" y="173" text-anchor="middle">01_oom.sh:19</text>
+<line class="ln ln-blue" x1="214" y1="159.0" x2="238" y2="159.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="242" y="136" width="214" height="46" rx="8"/>
+<text class="mono" x="349" y="156" text-anchor="middle">_terminating_experiment</text>
+<text class="ts" x="349" y="173" text-anchor="middle">lib:388</text>
+<text class="ts" x="470" y="164">OOM · CPU 공통 뼈대 — 아래 ③~⑦ 을 차례로 부른다</text>
+<text class="th" x="36" y="251.0" text-anchor="middle">③</text>
+<text class="tb" x="64" y="212">Before</text>
+<text class="mono" x="126" y="212">export MEMORY_LIMIT=256 CPU_MAX_OCCUPY=10 MULTI_THREAD_ENABLE=false</text>
+<text class="ts" x="628" y="212">(01_oom.sh:38)</text>
+<rect class="box" x="64" y="222" width="174" height="46" rx="8"/>
+<text class="mono" x="151" y="242" text-anchor="middle">eval "$before_env"</text>
+<text class="ts" x="151" y="259" text-anchor="middle">lib:400 · 설정 적용</text>
+<line class="ln ln-blue" x1="238" y1="245.0" x2="258" y2="245.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="262" y="222" width="110" height="46" rx="8"/>
+<text class="mono" x="317" y="242" text-anchor="middle">launch_app</text>
+<text class="ts" x="317" y="259" text-anchor="middle">lib:160 · 앱 켬</text>
+<line class="ln ln-blue" x1="372" y1="245.0" x2="392" y2="245.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="396" y="222" width="239" height="46" rx="8"/>
+<text class="mono" x="515.5" y="242" text-anchor="middle">_confirm_pid / _worker_pid</text>
+<text class="ts" x="515.5" y="259" text-anchor="middle">lib:188 / lib:176 · 진짜 PID</text>
+<line class="ln ln-blue" x1="635" y1="245.0" x2="655" y2="245.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="659" y="222" width="182" height="46" rx="8"/>
+<text class="mono" x="750" y="242" text-anchor="middle">_snapshot_bind_addr</text>
+<text class="ts" x="750" y="259" text-anchor="middle">lib:256 · 포트 주소</text>
+<text class="th" x="36" y="314" text-anchor="middle">④</text>
+<rect class="zone" x="64" y="288" width="536" height="170" rx="12"/>
+<text class="mono" x="80" y="314">_watch_terminating</text>
+<text class="ts" x="234" y="314">lib:345 · 끝날 때까지 반복 (기본 15초, 재실행 3초 간격)</text>
+<rect class="box" x="112" y="332" width="264" height="46" rx="8"/>
+<text x="244" y="352" text-anchor="middle"><tspan class="tb">끝났나?</tspan><tspan class="ts"> kill -0 · 앱 로그 grep</tspan></text>
+<text class="mono" x="244" y="369" text-anchor="middle">self-terminat|limit exceeded</text>
+<line class="ln ln-blue" x1="376" y1="355.0" x2="400" y2="355.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="404" y="332" width="120" height="46" rx="8"/>
+<text class="mono" x="464" y="352" text-anchor="middle">_sample_to</text>
+<text class="ts" x="464" y="369" text-anchor="middle">lib:137</text>
+<line class="ln ln-blue" x1="464" y1="378" x2="464" y2="396" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="326" y="400" width="198" height="46" rx="8"/>
+<text class="mono" x="425" y="420" text-anchor="middle">_snapshot_terminating</text>
+<text class="ts" x="425" y="437" text-anchor="middle">lib:239 · 4번에 1번</text>
+<path class="ln ln-blue" d="M326,423 L200,423 L200,382" marker-end="url(#arrow-blue)"/>
+<text class="ts" x="210" y="413">쉬었다가 다시</text>
+<path class="ln ln-red" d="M112,355 L86,355 L86,488" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="93" y="348">예</text>
+<text class="ts c-red" x="98" y="482">시그니처 발견 → return 0 · 생존 시간 = SECONDS (재실행 Before 33초)</text>
+<rect class="zone" x="664" y="288" width="192" height="264" rx="12"/>
+<text class="ts" x="680" y="307">EVIDENCE_DIR</text>
+<text class="ts" x="680" y="324">(기본 evidence_live/)</text>
+<rect class="purple" x="680" y="332" width="160" height="46" rx="8"/>
+<text class="mono c-purple" x="760" y="352" text-anchor="middle">oom_monitor.log</text>
+<text class="ts" x="760" y="369" text-anchor="middle">샘플 한 줄씩</text>
+<rect class="purple" x="680" y="400" width="160" height="46" rx="8"/>
+<text class="mono c-purple" x="760" y="420" text-anchor="middle">oom_ps_top.txt</text>
+<text class="ts" x="760" y="437" text-anchor="middle">ps · top · ss 스냅샷</text>
+<rect class="purple" x="680" y="492" width="160" height="46" rx="8"/>
+<text class="mono c-purple" x="760" y="512" text-anchor="middle">oom_app.log</text>
+<text class="ts" x="760" y="529" text-anchor="middle">부트 출력 + 앱 로그</text>
+<line class="ln ln-purple dash" x1="524" y1="355" x2="676" y2="355" marker-end="url(#arrow-purple)"/>
+<rect class="bg" x="610" y="340" width="40" height="30"/>
+<text class="ts c-purple" x="630" y="360" text-anchor="middle">기록</text>
+<line class="ln ln-purple dash" x1="524" y1="423" x2="676" y2="423" marker-end="url(#arrow-purple)"/>
+<line class="ln ln-purple dash" x1="434" y1="515" x2="676" y2="515" marker-end="url(#arrow-purple)"/>
+<text class="th" x="36" y="521.0" text-anchor="middle">⑤</text>
+<rect class="box" x="64" y="492" width="150" height="46" rx="8"/>
+<text class="mono" x="139" y="512" text-anchor="middle">_snapshot_gone</text>
+<text class="ts" x="139" y="529" text-anchor="middle">lib:288 · 종료 직후</text>
+<line class="ln ln-blue" x1="214" y1="515.0" x2="234" y2="515.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="238" y="492" width="196" height="46" rx="8"/>
+<text class="mono" x="336" y="512" text-anchor="middle">_append_app_evidence</text>
+<text class="ts" x="336" y="529" text-anchor="middle">lib:327 · 앱 출력 모으기</text>
+<text class="th" x="36" y="591.0" text-anchor="middle">⑥</text>
+<rect class="blue" x="64" y="562" width="158" height="46" rx="8"/>
+<text class="mono" x="143" y="582" text-anchor="middle">MEMORY_LIMIT=512</text>
+<text class="ts" x="143" y="599" text-anchor="middle">After — ③~⑤ 다시</text>
+<line class="ln ln-blue" x1="222" y1="585.0" x2="242" y2="585.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="246" y="562" width="231" height="46" rx="8"/>
+<text class="mono" x="361.5" y="582" text-anchor="middle">stop_after = Before × 1.5</text>
+<text class="ts" x="361.5" y="599" text-anchor="middle">lib:440 · 33초 × 1.5 = 49초</text>
+<line class="ln ln-green" x1="477" y1="585.0" x2="497" y2="585.0" marker-end="url(#arrow-green)"/>
+<rect class="green" x="501" y="562" width="132" height="46" rx="8"/>
+<text class="tb c-green" x="567" y="582" text-anchor="middle">49초까지 생존</text>
+<text class="mono" x="567" y="599" text-anchor="middle">→ return 2</text>
+<text class="th" x="36" y="661.0" text-anchor="middle">⑦</text>
+<rect class="box" x="64" y="632" width="110" height="46" rx="8"/>
+<text class="tb" x="119" y="652" text-anchor="middle">판정</text>
+<text class="ts" x="119" y="669" text-anchor="middle">lib:467-483</text>
+<line class="ln ln-blue" x1="174" y1="655.0" x2="194" y2="655.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="198" y="632" width="90" height="46" rx="8"/>
+<text class="mono" x="243" y="652" text-anchor="middle">_record</text>
+<text class="ts" x="243" y="669" text-anchor="middle">lib:489</text>
+<line class="ln ln-blue" x1="288" y1="655.0" x2="308" y2="655.0" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="312" y="632" width="133" height="46" rx="8"/>
+<text class="mono" x="378.5" y="652" text-anchor="middle">print_summary</text>
+<text class="ts" x="378.5" y="669" text-anchor="middle">lib:491</text>
+<line class="ln ln-green" x1="445" y1="655.0" x2="465" y2="655.0" marker-end="url(#arrow-green)"/>
+<rect class="green" x="469" y="632" width="387" height="46" rx="8"/>
+<text class="mono c-green" x="483" y="652">PASS  Before 0m33s → After &gt;0m49s</text>
+<text x="483" y="669"><tspan class="mono c-green">생존 [시그니처 확인]</tspan><tspan class="ts">   재실행 2026-09-23</tspan></text>
+</svg>

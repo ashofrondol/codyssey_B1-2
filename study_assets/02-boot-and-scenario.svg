@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="770" viewBox="0 0 880 770" role="img" aria-labelledby="title desc">
+<title id="title">부트 6단계 검사와 시나리오 선택 (관측으로 세운 규칙)</title>
+<desc id="desc">agent-leak-app 은 계정, 환경변수, secret.key 내용, 포트 15034, 로그 폴더 쓰기, 값 범위를 차례로 검사하고 하나라도 실패하면 System Boot Failed. Process Terminated. 를 남기고 exit 1 로 끝난다. 모두 통과하면 Resource Check 에서 MEMORY_LIMIT ≤ 256 이면 누수, CPU_MAX_OCCUPY ≥ 51 이면 CPU 과점유, MULTI_THREAD_ENABLE 이 true 이면 교착상태 시나리오를 고르고, 셋 다 아니면 Healthy System Monitoring 으로 정상 가동한다. 이 순서는 부트 배너와 종료 코드 관측으로 세운 규칙이다. MULTI_THREAD_ENABLE=true 를 메모리나 CPU 위험값과 함께 켜면 누수나 CPU 시나리오가 뽑히고, DEADLOCK 경고 배너는 true 이면 항상 뜬다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="770"/>
+
+<text class="th" x="24" y="34">부트 6단계 검사와 시나리오 선택</text>
+<text class="ts" x="24" y="56">위: 6단계를 차례로 검사 — 하나라도 실패하면 빨간 점선 길로 바로 종료 · 아래: 모두 통과하면 세 값으로 장애 하나를 고른다</text>
+
+<!-- column headers -->
+<text class="ts tb" x="24" y="80">검사 (위에서부터 차례로)</text>
+<text class="ts tb" x="268" y="80">실패하면 나오는 메시지 (재실행 실제 출력)</text>
+
+<!-- connectors between steps -->
+<line class="ln ln-blue" x1="134" y1="122" x2="134" y2="132"/>
+<line class="ln ln-blue" x1="134" y1="164" x2="134" y2="174"/>
+<line class="ln ln-blue" x1="134" y1="206" x2="134" y2="216"/>
+<line class="ln ln-blue" x1="134" y1="248" x2="134" y2="258"/>
+<line class="ln ln-blue" x1="134" y1="290" x2="134" y2="300"/>
+
+<!-- boot steps -->
+<rect class="box" x="24" y="90" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="111">[1/6]</text>
+<text x="86" y="111">계정 (root 아님)</text>
+<rect class="box" x="24" y="132" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="153">[2/6]</text>
+<text x="86" y="153">환경변수</text>
+<rect class="box" x="24" y="174" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="195">[3/6]</text>
+<text x="86" y="195">secret.key 내용</text>
+<rect class="box" x="24" y="216" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="237">[4/6]</text>
+<text x="86" y="237">포트 15034 비어 있음</text>
+<rect class="box" x="24" y="258" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="279">[5/6]</text>
+<text x="86" y="279">로그 폴더 쓰기</text>
+<rect class="box" x="24" y="300" width="220" height="32" rx="8"/>
+<text class="mono c-blue" x="36" y="321">[6/6]</text>
+<text x="86" y="321">값 범위</text>
+
+<!-- failure messages -->
+<text class="mono c-red" x="268" y="153">Port mismatch (Expected 15034, Got 8080)</text>
+<text class="mono c-red" x="268" y="195">Invalid Content in secret.key</text>
+<text class="mono c-red" x="268" y="237">Port 15034 is already in use.</text>
+<text class="mono c-red" x="268" y="279">Permission Denied</text>
+<text class="mono c-red" x="268" y="321">MEMORY_LIMIT too high (600MB)</text>
+
+<!-- failure bus -->
+<line class="ln ln-red dash" x1="550" y1="148" x2="612" y2="148"/>
+<line class="ln ln-red dash" x1="474" y1="190" x2="612" y2="190"/>
+<line class="ln ln-red dash" x1="474" y1="232" x2="612" y2="232"/>
+<line class="ln ln-red dash" x1="398" y1="274" x2="612" y2="274"/>
+<line class="ln ln-red dash" x1="474" y1="316" x2="612" y2="316"/>
+<line class="ln ln-red dash" x1="612" y1="148" x2="612" y2="316"/>
+<line class="ln ln-red dash" x1="612" y1="232" x2="632" y2="232" marker-end="url(#arrow-red)"/>
+
+<rect class="red dash" x="636" y="194" width="220" height="76" rx="10"/>
+<text class="mono c-red" x="746" y="218" text-anchor="middle">System Boot Failed.</text>
+<text class="mono c-red" x="746" y="237" text-anchor="middle">Process Terminated.</text>
+<text class="ts" x="746" y="259" text-anchor="middle">exit 1</text>
+<text class="ts" x="746" y="294" text-anchor="middle">뒤 단계는 모두 건너뜀 (Skipped)</text>
+
+<!-- all OK -->
+<line class="ln ln-blue" x1="134" y1="332" x2="134" y2="364" marker-end="url(#arrow-blue)"/>
+<text class="ts c-blue tb" x="146" y="353">6단계 모두 OK</text>
+
+<rect class="box" x="24" y="368" width="260" height="34" rx="10"/>
+<text class="mono" x="154" y="390" text-anchor="middle">Resource Check</text>
+
+<line class="ln" x1="154" y1="402" x2="154" y2="422" marker-end="url(#arrow)"/>
+
+<!-- Q1 -->
+<rect class="orange" x="24" y="426" width="260" height="48" rx="10"/>
+<text class="mono c-orange" x="154" y="455" text-anchor="middle">MEMORY_LIMIT ≤ 256 ?</text>
+<line class="ln ln-red" x1="284" y1="450" x2="332" y2="450" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="308" y="443" text-anchor="middle">예</text>
+<rect class="red" x="336" y="426" width="340" height="48" rx="10"/>
+<text class="tb c-red" x="350" y="447">누수 시나리오</text>
+<text class="mono c-red" x="662" y="447" text-anchor="end">exit 137</text>
+<text class="mono" x="350" y="466">[ WARNING: Recommend Over 256MB ]</text>
+<text class="ts" x="692" y="447">경계</text>
+<text class="ts" x="692" y="466">256 → WARNING · 257 → OK</text>
+
+<line class="ln" x1="154" y1="474" x2="154" y2="494" marker-end="url(#arrow)"/>
+<text class="ts" x="164" y="489">아니오</text>
+
+<!-- Q2 -->
+<rect class="orange" x="24" y="498" width="260" height="48" rx="10"/>
+<text class="mono c-orange" x="154" y="527" text-anchor="middle">CPU_MAX_OCCUPY ≥ 51 ?</text>
+<line class="ln ln-red" x1="284" y1="522" x2="332" y2="522" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="308" y="515" text-anchor="middle">예</text>
+<rect class="red" x="336" y="498" width="340" height="48" rx="10"/>
+<text class="tb c-red" x="350" y="519">CPU 과점유 시나리오</text>
+<text class="mono c-red" x="662" y="519" text-anchor="end">exit 143</text>
+<text class="mono" x="350" y="538">[ WARNING: Recommend Under 50% ]</text>
+<text class="ts" x="692" y="519">경계</text>
+<text class="ts" x="692" y="538">50 → OK · 51 → WARNING</text>
+
+<line class="ln" x1="154" y1="546" x2="154" y2="566" marker-end="url(#arrow)"/>
+<text class="ts" x="164" y="561">아니오</text>
+
+<!-- Q3 -->
+<rect class="orange" x="24" y="570" width="260" height="48" rx="10"/>
+<text class="mono c-orange" x="154" y="599" text-anchor="middle">MULTI_THREAD_ENABLE = true ?</text>
+<line class="ln ln-red" x1="284" y1="594" x2="332" y2="594" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="308" y="587" text-anchor="middle">예</text>
+<rect class="red" x="336" y="570" width="340" height="48" rx="10"/>
+<text class="tb c-red" x="350" y="591">교착상태 시나리오</text>
+<text class="ts c-red" x="662" y="591" text-anchor="end">종료 없이 멈춤</text>
+<text class="mono" x="350" y="610">POTENTIAL DEADLOCK IN CONCURRENT MODE</text>
+<text class="ts" x="692" y="591">경계</text>
+<text class="ts" x="692" y="610">1 · yes 도 true</text>
+
+<line class="ln" x1="154" y1="618" x2="154" y2="638" marker-end="url(#arrow)"/>
+<text class="ts" x="164" y="633">아니오</text>
+
+<!-- healthy -->
+<rect class="green" x="24" y="642" width="260" height="40" rx="10"/>
+<text class="mono c-green" x="154" y="667" text-anchor="middle">[Healthy System Monitoring]</text>
+<text class="ts c-green" x="300" y="667">세 값이 모두 안전 → 장애 없이 정상 가동</text>
+
+<!-- footnote -->
+<text class="ts" x="24" y="708">질문 순서는 관측과 모순 없는 순서다: (256MB, 95%) 로 켜면 메모리 쪽 exit 137, (512MB, 95%) 로 켜면 CPU 쪽 exit 143.</text>
+<text class="ts" x="24" y="727">true 를 함께 켜도 256 이면 누수, 95 면 CPU 시나리오였다 — DEADLOCK 경고 배너는 true 면 늘 뜬다(재실행).</text>
+<text class="ts" x="24" y="746">앱 안을 들여다본 것이 아니라 부트 배너·종료 코드를 바깥에서 관측해 세운 규칙이다.</text>
+</svg>

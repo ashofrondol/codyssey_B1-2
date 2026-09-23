@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="444" viewBox="0 0 820 444" role="img" aria-labelledby="title desc">
+<title id="title">같은 바이너리, 다른 순서 — Round-Robin 과 FCFS</title>
+<desc id="desc">위쪽은 제출 증거의 로그로, Thread-A, B, C 가 두 칸씩 돌고 Preempted 로 넘겨 A→B→C 를 3라운드 돈다. 아래쪽은 재실행 로그로, Thread-A 가 20% 부터 100% 까지 다섯 칸을 이어서 끝낸 뒤 B, C 순서로 실행된다. 두 경우 모두 로그 간격은 약 50ms 다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="820" height="444"/>
+<text class="th" x="24" y="36">같은 바이너리, 다른 순서 — 증거는 Round-Robin, 재실행은 FCFS</text>
+<text class="ts" x="24" y="58">칸 하나 = 로그 한 줄(약 50ms) · 숫자 = 진행률(%) · P = Preempted(선점되어 진행률 저장) · 초록 = 100% 완료</text>
+<text class="tb" x="24" y="98">① 제출 증거 (계정 ashofrondol) — A→B→C 를 3라운드, 스레드 교체 8회</text>
+<line class="ln" x1="120" y1="125" x2="796" y2="125" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="130" text-anchor="end">Thread-A</text>
+<rect class="blue" x="120.0" y="112" width="28.6" height="26" rx="4"/>
+<text x="134.3" y="130" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="152.2" y="112" width="28.6" height="26" rx="4"/>
+<text x="166.5" y="130" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="orange" x="184.5" y="112" width="28.6" height="26" rx="4"/>
+<text x="198.8" y="130" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="blue" x="408.8" y="112" width="28.6" height="26" rx="4"/>
+<text x="423.1" y="130" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="441.1" y="112" width="28.6" height="26" rx="4"/>
+<text x="455.4" y="130" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="orange" x="473.3" y="112" width="28.6" height="26" rx="4"/>
+<text x="487.6" y="130" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="green" x="697.6" y="112" width="28.6" height="26" rx="4"/>
+<text x="711.9" y="130" text-anchor="middle" class="ts c-green">100</text>
+<line class="ln" x1="120" y1="159" x2="796" y2="159" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="164" text-anchor="end">Thread-B</text>
+<rect class="blue" x="216.1" y="146" width="28.6" height="26" rx="4"/>
+<text x="230.4" y="164" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="248.3" y="146" width="28.6" height="26" rx="4"/>
+<text x="262.6" y="164" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="orange" x="280.5" y="146" width="28.6" height="26" rx="4"/>
+<text x="294.8" y="164" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="blue" x="504.9" y="146" width="28.6" height="26" rx="4"/>
+<text x="519.2" y="164" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="537.1" y="146" width="28.6" height="26" rx="4"/>
+<text x="551.4" y="164" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="orange" x="569.4" y="146" width="28.6" height="26" rx="4"/>
+<text x="583.7" y="164" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="green" x="729.9" y="146" width="28.6" height="26" rx="4"/>
+<text x="744.2" y="164" text-anchor="middle" class="ts c-green">100</text>
+<line class="ln" x1="120" y1="193" x2="796" y2="193" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="198" text-anchor="end">Thread-C</text>
+<rect class="blue" x="312.8" y="180" width="28.6" height="26" rx="4"/>
+<text x="327.1" y="198" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="344.4" y="180" width="28.6" height="26" rx="4"/>
+<text x="358.7" y="198" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="orange" x="376.6" y="180" width="28.6" height="26" rx="4"/>
+<text x="390.9" y="198" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="blue" x="601.0" y="180" width="28.6" height="26" rx="4"/>
+<text x="615.3" y="198" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="633.2" y="180" width="28.6" height="26" rx="4"/>
+<text x="647.5" y="198" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="orange" x="665.4" y="180" width="28.6" height="26" rx="4"/>
+<text x="679.7" y="198" text-anchor="middle" class="ts c-orange">P</text>
+<rect class="green" x="762.1" y="180" width="28.6" height="26" rx="4"/>
+<text x="776.4" y="198" text-anchor="middle" class="ts c-green">100</text>
+<text class="tb" x="24" y="244">② 재실행 (계정 coder) — A 가 100% 까지 끝난 뒤 B, 그다음 C · Preempted 0건</text>
+<line class="ln" x1="120" y1="271" x2="796" y2="271" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="276" text-anchor="end">Thread-A</text>
+<rect class="blue" x="120.0" y="258" width="28.6" height="26" rx="4"/>
+<text x="134.3" y="276" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="152.2" y="258" width="28.6" height="26" rx="4"/>
+<text x="166.5" y="276" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="blue" x="184.5" y="258" width="28.6" height="26" rx="4"/>
+<text x="198.8" y="276" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="216.1" y="258" width="28.6" height="26" rx="4"/>
+<text x="230.4" y="276" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="green" x="248.3" y="258" width="28.6" height="26" rx="4"/>
+<text x="262.6" y="276" text-anchor="middle" class="ts c-green">100</text>
+<line class="ln" x1="120" y1="305" x2="796" y2="305" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="310" text-anchor="end">Thread-B</text>
+<rect class="blue" x="280.5" y="292" width="28.6" height="26" rx="4"/>
+<text x="294.8" y="310" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="312.1" y="292" width="28.6" height="26" rx="4"/>
+<text x="326.4" y="310" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="blue" x="344.4" y="292" width="28.6" height="26" rx="4"/>
+<text x="358.7" y="310" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="376.0" y="292" width="28.6" height="26" rx="4"/>
+<text x="390.3" y="310" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="green" x="408.2" y="292" width="28.6" height="26" rx="4"/>
+<text x="422.5" y="310" text-anchor="middle" class="ts c-green">100</text>
+<line class="ln" x1="120" y1="339" x2="796" y2="339" stroke-dasharray="2 4"/>
+<text class="mono" x="104" y="344" text-anchor="end">Thread-C</text>
+<rect class="blue" x="439.8" y="326" width="28.6" height="26" rx="4"/>
+<text x="454.1" y="344" text-anchor="middle" class="ts c-blue">20</text>
+<rect class="blue" x="472.0" y="326" width="28.6" height="26" rx="4"/>
+<text x="486.3" y="344" text-anchor="middle" class="ts c-blue">40</text>
+<rect class="blue" x="503.6" y="326" width="28.6" height="26" rx="4"/>
+<text x="517.9" y="344" text-anchor="middle" class="ts c-blue">60</text>
+<rect class="blue" x="535.9" y="326" width="28.6" height="26" rx="4"/>
+<text x="550.2" y="344" text-anchor="middle" class="ts c-blue">80</text>
+<rect class="green" x="568.1" y="326" width="28.6" height="26" rx="4"/>
+<text x="582.4" y="344" text-anchor="middle" class="ts c-green">100</text>
+<line class="ln" x1="120" y1="370" x2="796" y2="370"/>
+<line class="ln" x1="120.0" y1="370" x2="120.0" y2="376"/>
+<text class="ts" x="120.0" y="392" text-anchor="middle">0</text>
+<line class="ln" x1="278.0" y1="370" x2="278.0" y2="376"/>
+<text class="ts" x="278.0" y="392" text-anchor="middle">250</text>
+<line class="ln" x1="436.0" y1="370" x2="436.0" y2="376"/>
+<text class="ts" x="436.0" y="392" text-anchor="middle">500</text>
+<line class="ln" x1="594.0" y1="370" x2="594.0" y2="376"/>
+<text class="ts" x="594.0" y="392" text-anchor="middle">750</text>
+<line class="ln" x1="752.0" y1="370" x2="752.0" y2="376"/>
+<text class="ts" x="752.0" y="392" text-anchor="middle">1000</text>
+<text class="ts" x="104" y="392" text-anchor="end">경과(ms)</text>
+<text class="ts" x="24" y="424">RR 은 두 단계(20→40)만 진행하고 P 로 다음에게 넘긴다(한 턴 약 150ms). FCFS 는 한 작업이 100% 끝날 때까지 이어서 돈다.</text>
+</svg>

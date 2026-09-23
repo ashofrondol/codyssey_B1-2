@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="540" viewBox="0 0 880 540" role="img" aria-labelledby="title desc">
+<title id="title">이 과제의 전체 구조 — 장애를 일으키고, 바깥에서 관찰하고, 리포트로 남긴다</title>
+<desc id="desc">환경변수 세 개(MEMORY_LIMIT, CPU_MAX_OCCUPY, MULTI_THREAD_ENABLE)가 agent-leak-app 의 부트 시퀀스와 Resource Check 를 거쳐 메모리 누수(exit 137), CPU 과점유(exit 143), 교착상태(종료 없음), 정상 가동 중 하나로 이어진다. 앱 안은 볼 수 없으므로 monitor.sh, ps·top, /proc, 앱 로그로 바깥에서 읽기만 하고, 그 결과를 evidence/ 증거 파일 11개로 저장한 뒤 reports/ 리포트 4편을 GitHub Issue 형식(현상 → 증거 → 원인 → 조치)으로 쓴다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="540"/>
+
+<text class="th" x="24" y="34">이 과제의 전체 구조</text>
+<text class="ts c-red" x="856" y="34" text-anchor="end">바이너리 디컴파일 금지 — 바깥 관찰만으로 추론</text>
+<text class="ts" x="24" y="58">장애를 일으키고(①②) → 바깥에서 관찰하고(③) → 증거와 리포트로 남긴다(④)</text>
+
+<!-- zones -->
+<rect class="zone" x="24" y="76" width="200" height="324" rx="12"/>
+<text class="tb" x="38" y="102">① 입력 — 환경변수</text>
+<rect class="zone" x="248" y="76" width="380" height="324" rx="12"/>
+<text class="tb" x="262" y="102">② agent-leak-app</text>
+<text class="ts" x="400" y="102">빌드된 바이너리 (안은 볼 수 없음)</text>
+<rect class="zone" x="652" y="76" width="204" height="324" rx="12"/>
+<text class="tb" x="666" y="102">③ 바깥에서 관찰</text>
+
+<!-- ① inputs -->
+<rect class="blue" x="36" y="116" width="176" height="52" rx="10"/>
+<text class="mono c-blue" x="124" y="137" text-anchor="middle">MEMORY_LIMIT</text>
+<text class="ts" x="124" y="157" text-anchor="middle">50~512 (MB)</text>
+<rect class="blue" x="36" y="182" width="176" height="52" rx="10"/>
+<text class="mono c-blue" x="124" y="203" text-anchor="middle">CPU_MAX_OCCUPY</text>
+<text class="ts" x="124" y="223" text-anchor="middle">10~100 (%)</text>
+<rect class="blue" x="36" y="248" width="176" height="52" rx="10"/>
+<text class="mono c-blue" x="124" y="269" text-anchor="middle">MULTI_THREAD_ENABLE</text>
+<text class="ts" x="124" y="289" text-anchor="middle">true / false</text>
+<rect class="box" x="36" y="316" width="176" height="70" rx="10"/>
+<text class="ts tb" x="124" y="336" text-anchor="middle">사전 조건 (부트가 검사)</text>
+<text class="ts" x="124" y="355" text-anchor="middle">AGENT_* 5종 · secret.key</text>
+<text class="ts" x="124" y="374" text-anchor="middle">포트 15034 · root 아님</text>
+
+<!-- input arrows (merge into one) -->
+<line class="ln ln-blue" x1="212" y1="208" x2="236" y2="208"/>
+<line class="ln ln-blue" x1="212" y1="274" x2="236" y2="274"/>
+<line class="ln ln-blue" x1="236" y1="142" x2="236" y2="274"/>
+<line class="ln ln-blue" x1="212" y1="142" x2="258" y2="142" marker-end="url(#arrow-blue)"/>
+
+<!-- ② app internals -->
+<rect class="box" x="262" y="116" width="140" height="56" rx="10"/>
+<text class="tb" x="332" y="139" text-anchor="middle">부트 시퀀스</text>
+<text class="mono" x="332" y="160" text-anchor="middle">[1/6]~[6/6]</text>
+<line class="ln ln-blue" x1="332" y1="172" x2="332" y2="218" marker-end="url(#arrow-blue)"/>
+<rect class="box" x="262" y="222" width="140" height="56" rx="10"/>
+<text class="mono" x="332" y="245" text-anchor="middle">Resource Check</text>
+<text class="ts" x="332" y="266" text-anchor="middle">시나리오 1개 선택</text>
+
+<!-- fork -->
+<line class="ln" x1="402" y1="250" x2="419" y2="250"/>
+<line class="ln" x1="419" y1="142" x2="419" y2="358"/>
+<line class="ln ln-red" x1="419" y1="142" x2="432" y2="142" marker-end="url(#arrow-red)"/>
+<line class="ln ln-red" x1="419" y1="214" x2="432" y2="214" marker-end="url(#arrow-red)"/>
+<line class="ln ln-red" x1="419" y1="286" x2="432" y2="286" marker-end="url(#arrow-red)"/>
+<line class="ln ln-green" x1="419" y1="358" x2="432" y2="358" marker-end="url(#arrow-green)"/>
+
+<!-- results -->
+<rect class="red" x="436" y="116" width="178" height="52" rx="10"/>
+<text class="tb c-red" x="450" y="138">메모리 누수</text>
+<text class="mono c-red" x="600" y="138" text-anchor="end">exit 137</text>
+<text class="ts" x="450" y="158">MemoryGuard 가 종료</text>
+
+<rect class="red" x="436" y="188" width="178" height="52" rx="10"/>
+<text class="tb c-red" x="450" y="210">CPU 과점유</text>
+<text class="mono c-red" x="600" y="210" text-anchor="end">exit 143</text>
+<text class="ts" x="450" y="230">CpuWorker 가 종료</text>
+
+<rect class="red" x="436" y="260" width="178" height="52" rx="10"/>
+<text class="tb c-red" x="450" y="282">교착상태</text>
+<text class="ts" x="600" y="282" text-anchor="end">종료 없음</text>
+<text class="ts" x="450" y="302">살아 있지만 멈춤</text>
+
+<rect class="green" x="436" y="332" width="178" height="52" rx="10"/>
+<text class="tb c-green" x="450" y="354">정상 가동</text>
+<text class="ts" x="600" y="354" text-anchor="end">종료 없음</text>
+<text class="ts" x="450" y="374">Healthy 시나리오</text>
+
+<!-- ③ observation tools -->
+<rect class="purple" x="662" y="116" width="184" height="52" rx="10"/>
+<text class="mono c-purple" x="754" y="137" text-anchor="middle">monitor.sh</text>
+<text class="ts" x="754" y="157" text-anchor="middle">PROC_RSS · PROC_CPU</text>
+<rect class="purple" x="662" y="188" width="184" height="52" rx="10"/>
+<text class="mono c-purple" x="754" y="209" text-anchor="middle">ps · top -H · ps -L</text>
+<text class="ts" x="754" y="229" text-anchor="middle">상태 · 스레드 · wchan</text>
+<rect class="purple" x="662" y="260" width="184" height="52" rx="10"/>
+<text class="mono c-purple" x="754" y="281" text-anchor="middle">/proc/&lt;pid&gt;/…</text>
+<text class="ts" x="754" y="301" text-anchor="middle">stat · status · smaps</text>
+<rect class="purple" x="662" y="332" width="184" height="52" rx="10"/>
+<text class="mono c-purple" x="754" y="353" text-anchor="middle">agent_app.log</text>
+<text class="ts" x="754" y="373" text-anchor="middle">앱이 남긴 로그</text>
+
+<!-- read-only observation bracket -->
+<line class="ln ln-purple dash" x1="662" y1="142" x2="641" y2="142"/>
+<line class="ln ln-purple dash" x1="662" y1="214" x2="641" y2="214"/>
+<line class="ln ln-purple dash" x1="662" y1="286" x2="641" y2="286"/>
+<line class="ln ln-purple dash" x1="662" y1="358" x2="641" y2="358"/>
+<line class="ln ln-purple dash" x1="641" y1="142" x2="641" y2="358"/>
+<line class="ln ln-purple dash" x1="641" y1="250" x2="620" y2="250" marker-end="url(#arrow-purple)"/>
+
+<!-- ④ save to evidence -->
+<path class="ln ln-purple" d="M754,400 L754,416 L99,416 L99,432" marker-end="url(#arrow-purple)"/>
+<rect class="bg" x="330" y="403" width="196" height="26"/>
+<text class="ts c-purple" x="428" y="421" text-anchor="middle">④ 관찰 결과를 파일로 저장</text>
+
+<rect class="purple" x="24" y="436" width="150" height="56" rx="10"/>
+<text class="mono c-purple" x="99" y="459" text-anchor="middle">evidence/</text>
+<text class="ts" x="99" y="480" text-anchor="middle">증거 파일 11개</text>
+
+<line class="ln ln-green" x1="174" y1="464" x2="202" y2="464" marker-end="url(#arrow-green)"/>
+
+<rect class="green" x="206" y="436" width="394" height="56" rx="10"/>
+<text class="mono c-green" x="403" y="459" text-anchor="middle">reports/</text>
+<text class="ts" x="403" y="480" text-anchor="middle">01 OOM · 02 CPU · 03 Deadlock · 04 스케줄링(보너스)</text>
+
+<line class="ln ln-green" x1="600" y1="464" x2="628" y2="464" marker-end="url(#arrow-green)"/>
+
+<rect class="box" x="632" y="436" width="224" height="56" rx="10"/>
+<text class="tb" x="744" y="459" text-anchor="middle">GitHub Issue 형식</text>
+<text class="ts" x="744" y="480" text-anchor="middle">현상 → 증거 → 원인 → 조치</text>
+
+<!-- legend -->
+<line class="ln ln-blue" x1="24" y1="518" x2="52" y2="518"/>
+<text class="ts" x="58" y="522">입력 전달</text>
+<line class="ln ln-purple dash" x1="136" y1="518" x2="164" y2="518"/>
+<text class="ts" x="170" y="522">점선 = 읽기만 함 (앱을 건드리지 않음)</text>
+<rect class="red" x="420" y="510" width="16" height="16" rx="3"/>
+<text class="ts" x="442" y="522">장애로 끝남</text>
+<rect class="green" x="536" y="510" width="16" height="16" rx="3"/>
+<text class="ts" x="558" y="522">정상 · 결과물</text>
+</svg>
